@@ -7,7 +7,7 @@ const Footer = () => {
         
         {/* --- Brand Section --- */}
         <div>
-          <h2 className="text-2xl font-extrabold text-white mb-3">Jersey<span className="text-[#0d9488]">Store</span></h2>
+          <h2 className="text-2xl font-extrabold text-white mb-3">Soka<span className="text-[#0d9488]">Store</span></h2>
           <p className="text-sm text-gray-400 leading-relaxed">
             Discover premium quality jerseys for your favorite teams.  
             Authentic, stylish, and built for real fans.

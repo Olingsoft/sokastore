@@ -2,6 +2,7 @@
 
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
+import Link from "next/link";
 
 // Note: I'm defining a placeholder for your accentTeal color for the redesign
 // In a real project, this would be in your Tailwind config or passed as a prop.
@@ -116,10 +117,10 @@ export default function CartPage() {
                                     <span>$169.00</span>
                                 </div>
 
-                                {/* Checkout Button using the accent color */}
-                                <button className={`w-full ${ACCENT_COLOR_CLASS} transition-all text-[#141313] font-bold py-3 px-4 rounded-lg mt-6 shadow-md`}>
-                                    Secure Checkout
-                                </button>
+                                {/* Checkout take me to payment  */}
+                               <Link href="/payment" className={`block mt-6 text-center ${ACCENT_COLOR_CLASS} text-[#141313] font-bold py-3 rounded-lg shadow-md`}>
+                                    Proceed to Payment
+                                </Link>
 
                                 <p className="text-xs text-gray-500 mt-3 text-center">
                                     Continue shopping for more deals.
