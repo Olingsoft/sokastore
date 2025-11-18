@@ -182,7 +182,7 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="flex">
+      <div className="flex w-full">
         <Sidebar />
         <main className="ml-64 flex-1 min-h-screen bg-[#141313] text-white">
           <Header />

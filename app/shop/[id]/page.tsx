@@ -204,7 +204,23 @@ const ProductDetail = ({ product: propProduct }: { product?: Product }) => {
                 </div>
               </div>
 
-              <button onClick={() => alert('Added to Bag!')} className="w-full bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider">
+              <button 
+                onClick={() => {
+                  const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
+                  if (!isLoggedIn) {
+                    // Store the current URL to redirect back after login
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('redirectAfterLogin', window.location.pathname);
+                    }
+                    // Redirect to login page
+                    window.location.href = '/login';
+                    return;
+                  }
+                  // User is logged in, proceed with adding to bag
+                  alert('Added to Bag!');
+                }} 
+                className="w-full bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider"
+              >
                 <ShoppingBagIcon className='w-5 h-5'/> Add to Bag
               </button>
             </div>

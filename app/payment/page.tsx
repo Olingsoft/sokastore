@@ -1,7 +1,7 @@
-// Updated Payment Page with Shipping Options
-
 "use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 
@@ -9,6 +9,17 @@ const ACCENT_COLOR_CLASS = "bg-teal-400 hover:bg-teal-500";
 const TEXT_ACCENT_COLOR_CLASS = "text-teal-400";
 
 export default function PaymentPage() {
+    const router = useRouter();
+
+    useEffect(() => {
+        // Check if user is logged in
+        const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
+        if (!isLoggedIn) {
+            router.push('/login');
+            return;
+        }
+    }, [router]);
+
     return (
         <div className="min-h-screen flex flex-col bg-[#141313] text-white">
             <Header />

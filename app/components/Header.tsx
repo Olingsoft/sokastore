@@ -1,20 +1,44 @@
-"use client";
-import { useState, Fragment } from "react";
-import { Menu, X, ShoppingBag, User, LogOut, Settings, UserCircle, Search, Grid3x3, Shirt, Loader, Activity, Sparkles } from "lucide-react";
+'use client';
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu as HeadlessMenu, Transition } from '@headlessui/react';
 import { useRouter } from 'next/navigation';
+import { Menu as HeadlessMenu, Transition } from '@headlessui/react';
+import { Search, Menu as MenuIcon, X, User, ShoppingCart, LogOut, UserCircle, Package } from 'lucide-react';
+
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+};
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    // Check if user is logged in
+    const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
+
   const handleLogout = () => {
-    // Add your logout logic here
-    console.log('User logged out');
-    // Redirect to login or home page after logout
-    router.push('/login');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+    setUser(null);
+    setOpen(false);
+    router.push('/');
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -22,27 +46,42 @@ export default function Header() {
     if (searchQuery.trim()) {
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
+      setOpen(false);
     }
   };
 
   return (
     <header className="bg-[#0a0f0a] text-white border-b border-gray-800 sticky top-0 z-50">
+      {/* Top Bar */}
       <div className="w-full flex justify-center text-center gap-5 p-2 bg-green-800">
         <span className="text-sm">tell : +25769210601</span>
         <span className="text-white text-sm">whatsapp: +254769210601</span>
       </div>
+
+      {/* Main Header */}
       <div className="container mx-auto flex justify-between items-center p-4 gap-4">
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          className="lg:hidden text-white hover:text-green-400"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X size={24} /> : <MenuIcon size={24} />}
+        </button>
+
         {/* Logo */}
         <Link href="/" className="text-2xl font-extrabold tracking-wide text-green-400 whitespace-nowrap">
           Soka<span className="text-white">Store<span className="text-sm">.ke</span></span>
         </Link>
 
-        {/* Desktop Menu - Reduced to just Home */}
+        {/* Desktop Navigation */}
         <nav className="hidden lg:flex gap-6">
-          <Link href="/" className="hover:text-green-400 transition whitespace-nowrap">Home</Link>
+          <Link href="/" className="hover:text-green-400 transition">Home</Link>
+          <Link href="/shop" className="hover:text-green-400 transition">Shop</Link>
+          <Link href="/collections" className="hover:text-green-400 transition">Collections</Link>
         </nav>
 
-        {/* Search Bar - Centered */}
+        {/* Search Bar - Desktop */}
         <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg mx-4">
           <div className="relative w-full">
             <input
@@ -56,177 +95,97 @@ export default function Header() {
           </div>
         </form>
 
-        {/* Right Icons */}
-        <div className="flex items-center gap-4">
-          <Link href="/cart" className="relative">
-            <ShoppingBag className="w-6 h-6 hover:text-green-400 cursor-pointer transition" />
-            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">0</span>
-          </Link>
-          
-          {/* User Dropdown */}
-          <HeadlessMenu as="div" className="relative">
-            <div>
-              <HeadlessMenu.Button className="flex items-center gap-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-[#0a0f0a]">
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-                  <User className="w-5 h-5 text-gray-300" />
-                </div>
-                <span className="hidden md:inline text-gray-300 hover:text-white">My Account</span>
+        {/* Auth & Cart - Desktop */}
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <HeadlessMenu as="div" className="relative">
+              <HeadlessMenu.Button className="flex items-center space-x-2 text-white hover:text-green-400 transition-colors">
+                <UserCircle className="w-6 h-6" />
+                <span className="hidden sm:inline">Account</span>
               </HeadlessMenu.Button>
-            </div>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <HeadlessMenu.Items className="absolute right-0 mt-2 w-64 origin-top-right divide-y divide-gray-700 rounded-md bg-[#1e1e1e] shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border border-gray-700">
-                {/* Categories Section */}
-                <div className="px-1 py-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Categories</div>
+              <Transition
+                as="div"
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <HeadlessMenu.Items className="absolute right-0 mt-2 w-48 bg-[#1e1e1e] rounded-md shadow-lg py-1 z-50 border border-gray-700">
                   <HeadlessMenu.Item>
                     {({ active }) => (
                       <Link
-                        href="/shop?category=collections"
+                        href="/account"
                         className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          active ? 'bg-gray-800' : ''
+                        } flex items-center px-4 py-2 text-sm text-white`}
                       >
-                        <Grid3x3 className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Collections
+                        <User className="w-4 h-4 mr-2" />
+                        My Profile
                       </Link>
                     )}
                   </HeadlessMenu.Item>
                   <HeadlessMenu.Item>
                     {({ active }) => (
                       <Link
-                        href="/shop?category=football"
+                        href="/orders"
                         className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          active ? 'bg-gray-800' : ''
+                        } flex items-center px-4 py-2 text-sm text-white`}
                       >
-                        <Activity className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Football
-                      </Link>
-                    )}
-                  </HeadlessMenu.Item>
-                  <HeadlessMenu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/shop?category=rugby"
-                        className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <Shirt className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Rugby
-                      </Link>
-                    )}
-                  </HeadlessMenu.Item>
-                  <HeadlessMenu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/shop?category=basketball"
-                        className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <Sparkles className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Basketball
-                      </Link>
-                    )}
-                  </HeadlessMenu.Item>
-                  <HeadlessMenu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/shop?category=volleyball"
-                        className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <Loader className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Volleyball
-                      </Link>
-                    )}
-                  </HeadlessMenu.Item>
-                </div>
-                
-                {/* Account Section */}
-                <div className="px-1 py-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Account</div>
-                  <HeadlessMenu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/account/"
-                        className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <UserCircle className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Profile
-                      </Link>
-                    )}
-                  </HeadlessMenu.Item>
-                  <HeadlessMenu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/account/"
-                        className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <ShoppingBag className="mr-2 h-5 w-5" aria-hidden="true" />
+                        <Package className="w-4 h-4 mr-2" />
                         My Orders
                       </Link>
                     )}
                   </HeadlessMenu.Item>
                   <HeadlessMenu.Item>
                     {({ active }) => (
-                      <Link
-                        href="/account/"
-                        className={`${
-                          active ? 'bg-gray-800 text-white' : 'text-gray-200'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <Settings className="mr-2 h-5 w-5" aria-hidden="true" />
-                        Settings
-                      </Link>
-                    )}
-                  </HeadlessMenu.Item>
-                </div>
-                <div className="px-1 py-1">
-                  <HeadlessMenu.Item>
-                    {({ active }) => (
                       <button
                         onClick={handleLogout}
                         className={`${
-                          active ? 'bg-red-600 text-white' : 'text-red-500'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          active ? 'bg-gray-800' : ''
+                        } w-full text-left px-4 py-2 text-sm text-white flex items-center`}
                       >
-                        <LogOut className="mr-2 h-5 w-5" aria-hidden="true" />
+                        <LogOut className="w-4 h-4 mr-2" />
                         Logout
                       </button>
                     )}
                   </HeadlessMenu.Item>
-                </div>
-              </HeadlessMenu.Items>
-            </Transition>
-          </HeadlessMenu>
-          
-          <button
-            onClick={() => setOpen(!open)}
-            className="md:hidden p-2 hover:bg-gray-800 rounded-lg"
+                </HeadlessMenu.Items>
+              </Transition>
+            </HeadlessMenu>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-white hover:text-green-400 transition-colors whitespace-nowrap hidden sm:inline"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors whitespace-nowrap hidden sm:inline-flex items-center"
+              >
+                Register
+              </Link>
+            </>
+          )}
+          <Link
+            href="/cart"
+            className="text-white hover:text-green-400 transition-colors relative"
           >
-            {open ? <X /> : <Menu />}
-          </button>
+            <ShoppingCart className="w-6 h-6" />
+            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              0
+            </span>
+          </Link>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden bg-[#0f1410] border-t border-gray-800">
+        <div className="lg:hidden bg-[#0a0f0a] border-t border-gray-800">
           {/* Mobile Search */}
           <div className="p-4 border-b border-gray-800">
             <form onSubmit={handleSearch} className="flex gap-2">
@@ -251,16 +210,47 @@ export default function Header() {
           
           {/* Mobile Navigation */}
           <nav className="flex flex-col py-4 space-y-1">
-            <Link href="/" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>Home</Link>
-            <Link href="/shop?category=collections" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>Collections</Link>
-            <Link href="/shop?category=football" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>Football</Link>
-            <Link href="/shop?category=rugby" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>Rugby</Link>
-            <Link href="/shop?category=basketball" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>Basketball</Link>
-            <Link href="/shop?category=volleyball" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>Volleyball</Link>
+            <Link href="/" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
+              Home
+            </Link>
+            <Link href="/shop" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
+              Shop
+            </Link>
+            <Link href="/collections" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
+              Collections
+            </Link>
+            
+            {user ? (
+              <>
+                <Link href="/account" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition flex items-center" onClick={() => setOpen(false)}>
+                  <UserCircle className="w-5 h-5 mr-2" /> My Account
+                </Link>
+                <Link href="/orders" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition flex items-center" onClick={() => setOpen(false)}>
+                  <Package className="w-5 h-5 mr-2" /> My Orders
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-800 hover:text-red-400 transition flex items-center"
+                >
+                  <LogOut className="w-5 h-5 mr-2" /> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
+                  Login
+                </Link>
+                <Link href="/register" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
+                  Create Account
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}
     </header>
   );
 }
-

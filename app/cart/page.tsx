@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import Link from "next/link";
@@ -11,6 +13,17 @@ const ACCENT_COLOR_CLASS = "bg-teal-400 hover:bg-teal-500";
 const TEXT_ACCENT_COLOR_CLASS = "text-teal-400 hover:text-teal-300";
 
 export default function CartPage() {
+    const router = useRouter();
+
+    useEffect(() => {
+        // Check if user is logged in
+        const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
+        if (!isLoggedIn) {
+            router.push('/login');
+            return;
+        }
+    }, [router]);
+
     return (
         <div className="min-h-screen flex flex-col">
             <Header />
