@@ -1,7 +1,7 @@
 'use client';
 import { ArrowLeft, Package, DollarSign, Tag, Text, Image as ImageIcon, Zap, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Sidebar from "@/app/admin/components/sideBar";
 
@@ -82,30 +82,48 @@ const InputField: React.FC<InputFieldProps> = ({
   </div>
 );
 
-// Mock Categories for the dropdown
-const categories = [
-  { value: 'Premier League', label: 'Premier League' },
-  { value: 'La Liga', label: 'La Liga' },
-  { value: 'Serie A', label: 'Serie A' },
-  { value: 'Bundesliga', label: 'Bundesliga' },
-  { value: 'Ligue 1', label: 'Ligue 1' },
-  { value: 'National Team', label: 'National Team' },
-];
-
 export default function AddProductPage() {
   const router = useRouter();
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'One Size'];
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const [categoriesDb, setCategoriesDb] = useState<{ id: string | number; name: string; slug: string }[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     price: '',
-    category: categories[0].value,
+    category: '',
     size: null,
     description: '',
     imageFiles: [],
     hasCustomization: false,
     customizationDetails: '',
   });
+  
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/categories`);
+        if (!res.ok) throw new Error('Failed to fetch categories');
+        const data = await res.json();
+        const list = Array.isArray((data as any)?.data) ? (data as any).data : [];
+        setCategoriesDb(list);
+        // Initialize selected category to first item if empty
+        if (list.length > 0) {
+          setFormData(prev => ({ ...prev, category: prev.category || list[0].name }));
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setCategoriesError('Failed to load categories');
+        setCategoriesDb([]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, [apiUrl]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -140,95 +158,92 @@ export default function AddProductPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  
-  const formDataToSend = new FormData();
-  
-  // Format category to title case (e.g., 'premier league' -> 'Premier League')
-const formatCategory = (category: string): string => {
-  const formattedCategory = categories.find(
-    cat => cat.value.toUpperCase() === category.toUpperCase()
-  )?.value;
-  
-  if (!formattedCategory) {
-    console.warn(`Invalid category: ${category}. Defaulting to first available category.`);
-    return categories[0].value;
-  }
-  
-  return formattedCategory;
-};
+    e.preventDefault();
+    setIsLoading(true);
+    
+    const formDataToSend = new FormData();
+    
+    // Format category by matching fetched category names
+    const formatCategory = (category: string): string => {
+      const found = categoriesDb.find(
+        cat => cat.name.toUpperCase() === (category || '').toUpperCase()
+      )?.name;
+      if (!found) {
+        console.warn(`Invalid category: ${category}. Defaulting to first available category.`);
+        return categoriesDb[0]?.name || '';
+      }
+      return found;
+    };
 
-  // Add text fields to FormData
-  formDataToSend.append('name', formData.name);
-  formDataToSend.append('price', formData.price.toString());
-  formDataToSend.append('category', formatCategory(formData.category));
-  formDataToSend.append('size', formData.size || '');
-  formDataToSend.append('description', formData.description);
-  formDataToSend.append('hasCustomization', formData.hasCustomization.toString());
-  formDataToSend.append('customizationDetails', formData.customizationDetails);
-  
-  // Add image files to FormData
-  formData.imageFiles.forEach(file => {
-    formDataToSend.append('images', file);
-  });
-  
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    const response = await fetch(`${apiUrl}/products`, {
-      method: 'POST',
-      headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  },
-      body: formDataToSend,
+    // Add text fields to FormData
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('price', formData.price.toString());
+    formDataToSend.append('category', formatCategory(formData.category));
+    formDataToSend.append('size', formData.size || '');
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('hasCustomization', formData.hasCustomization.toString());
+    formDataToSend.append('customizationDetails', formData.customizationDetails);
+    
+    // Add image files to FormData
+    formData.imageFiles.forEach(file => {
+      formDataToSend.append('images', file);
     });
-
-    const responseText = await response.text();
-    let data;
     
     try {
-      data = responseText ? JSON.parse(responseText) : {};
-    } catch (e) {
-      console.error('Failed to parse response as JSON:', responseText);
-      throw new Error('Server returned invalid JSON response');
-    }
-    
-    if (!response.ok) {
-      console.error('Server error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data
+      const response = await fetch(`${apiUrl}/products`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend,
       });
-      throw new Error(data.message || `Server error: ${response.status} ${response.statusText}`);
+
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', responseText);
+        throw new Error('Server returned invalid JSON response');
+      }
+      
+      if (!response.ok) {
+        console.error('Server error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          data
+        });
+        throw new Error(data.message || `Server error: ${response.status} ${response.statusText}`);
+      }
+      
+      // Set success message and show modal
+      setSuccessMessage(`${formData.name} has been added to your store.`);
+      setShowSuccessModal(true);
+      
+      // Reset form
+      setFormData({
+        name: '',
+        price: '',
+        category: categoriesDb[0]?.name || '',
+        size: null,
+        description: '',
+        imageFiles: [],
+        hasCustomization: false,
+        customizationDetails: '',
+      });
+      
+      // Show success toast
+      toast.success('Product created successfully!');
+      
+    } catch (error: unknown) {
+      console.error('Error adding product:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast.error(`Error: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Set success message and show modal
-    setSuccessMessage(`${formData.name} has been added to your store.`);
-    setShowSuccessModal(true);
-    
-    // Reset form
-    setFormData({
-      name: '',
-      price: '',
-      category: categories[0].value,
-      size: null,
-      description: '',
-      imageFiles: [],
-      hasCustomization: false,
-      customizationDetails: '',
-    });
-    
-    // Show success toast
-    toast.success('Product created successfully!');
-    
-  } catch (error: unknown) {
-    console.error('Error adding product:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    toast.error(`Error: ${errorMessage}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen bg-[#141313]">
@@ -271,9 +286,18 @@ const formatCategory = (category: string): string => {
                 onChange={handleChange}
                 type="select"
               >
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value} className="bg-[#2A2A2A]">
-                    {cat.label}
+                {categoriesLoading && (
+                  <option value="" className="bg-[#2A2A2A]">Loading categories...</option>
+                )}
+                {!categoriesLoading && categoriesError && (
+                  <option value="" className="bg-[#2A2A2A]">Failed to load categories</option>
+                )}
+                {!categoriesLoading && !categoriesError && categoriesDb.length === 0 && (
+                  <option value="" className="bg-[#2A2A2A]">No categories available</option>
+                )}
+                {!categoriesLoading && !categoriesError && categoriesDb.map(cat => (
+                  <option key={cat.id} value={cat.name} className="bg-[#2A2A2A]">
+                    {cat.name}
                   </option>
                 ))}
               </InputField>

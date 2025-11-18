@@ -110,44 +110,40 @@ export default function AdminProducts() {
 
   // Helper function to get the primary image or first image
   const getPrimaryImage = (images: ProductImage[]): string => {
-    if (!images || images.length === 0) {
-      return '';
+    if (!images || images.length === 0) return '';
+    // Prefer primary images, pick the one with the lowest position
+    const primaries = images.filter(img => img.isPrimary === true);
+    if (primaries.length > 0) {
+      const chosen = [...primaries].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))[0];
+      return (chosen?.url || '').trim();
     }
-    
-    // First, try to find an image marked as primary
-    const primaryImage = images.find(img => img.isPrimary === true);
-    if (primaryImage) {
-      return primaryImage.url;
-    }
-    
-    // If no primary image, sort by position and get the first one
-    const sortedImages = [...images].sort((a, b) => a.position - b.position);
-    return sortedImages[0]?.url || '';
+    // Else pick by position
+    const sortedImages = [...images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    return (sortedImages[0]?.url || '').trim();
   };
 
   // Helper function to construct full image URL
   const getFullImageUrl = (imagePath: string): string => {
-    if (!imagePath) return '';
-    
-    // If it's already a full URL, return it
+    if (!imagePath) {
+      return ''; // Return a default placeholder image URL if you have one
+    }
+
+    // If the path is already an absolute URL, return it directly.
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    
-    // If it's a path starting with /uploads, use it as is
-    if (imagePath.startsWith('/uploads/')) {
-      // Remove any leading /api from the path if present
-      const cleanPath = imagePath.startsWith('/api') ? imagePath.substring(4) : imagePath;
-      return `${apiUrl.replace('/api', '')}${cleanPath}`;
-    }
-    
-    // For backward compatibility, if the path doesn't start with /uploads
-    // but is a filename, assume it's in the uploads/products directory
-    if (imagePath.includes('.')) {
-      return `${apiUrl.replace('/api', '')}/uploads/products/${imagePath}`;
-    }
-    
-    return '';
+
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+
+    // Normalize path to remove leading slashes or 'public/' prefix.
+    let normalizedPath = imagePath.replace(/^\/|\/public\//, '');
+
+    // Construct the full URL.
+    const fullUrl = `${baseUrl}/${normalizedPath}`;
+
+    console.log(`[Image Debug] Path: ${imagePath}, Base: ${baseUrl}, Full: ${fullUrl}`);
+
+    return fullUrl;
   };
 
   return (
@@ -243,7 +239,7 @@ export default function AdminProducts() {
                   products.map((product) => {
                     const primaryImageUrl = getPrimaryImage(product.images);
                     const fullImageUrl = getFullImageUrl(primaryImageUrl);
-                    
+                    console.log(fullImageUrl);
                     return (
                       <tr key={product.id} className="border-t border-[#3A3A3A] hover:bg-[#3A3A3A] transition">
                         <td className="px-6 py-4">

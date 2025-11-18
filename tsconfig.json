@@ -38,7 +38,7 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/admin/stock/[id]/page.js"  ],
   "exclude": [
     "node_modules"
   ]

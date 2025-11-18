@@ -1,5 +1,5 @@
 'use client'
-import { LayoutDashboard, ShoppingBag, Tag, Users, ClipboardList, LogOut } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Tag, Users, ClipboardList, LogOut, Package } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,9 @@ const Sidebar = () => {
       <nav className="flex-1 p-4 space-y-2">
         <Link href="/admin" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <LayoutDashboard size={20} /> Dashboard
+        </Link>
+        <Link href="/admin/stock" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
+          <Package size={20} /> Stock Management
         </Link>
         <Link href="/admin/products" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <ShoppingBag size={20} /> Products
