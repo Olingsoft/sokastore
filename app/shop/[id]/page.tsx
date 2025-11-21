@@ -7,6 +7,7 @@ import { ChevronDownIcon, ArrowLeftIcon, ShoppingBagIcon } from '@heroicons/reac
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Link from 'next/link';
+import { useCart } from '../../context/CartContext';
 
 interface ProductImage {
   id?: number;
@@ -114,24 +115,27 @@ const ProductDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [relatedLoading, setRelatedLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { addToCart } = useCart();
 
   // UI state
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [mainImage, setMainImage] = useState<string>('');
-  const [customization, setCustomization] = useState<CustomizationOptions>({ playerName:'', playerNumber:'', selectedBadge:'' });
+  const [customization, setCustomization] = useState<CustomizationOptions>({ playerName: '', playerNumber: '', selectedBadge: '' });
 
   useEffect(() => {
     if (!id) return;
 
     const fetchProduct = async () => {
+      console.log('[ShopPage] Fetching product with ID:', id);
       setIsLoading(true);
       setError(null);
       try {
         const res = await fetch(`${apiUrl}/products/${id}`);
         if (!res.ok) throw new Error(`Failed to fetch product: ${res.status}`);
         const json = await res.json();
+        console.log('[ShopPage] Product fetch response:', json);
         // The API may return { data: product } or the product directly - handle both
         const p = (json?.data) ? json.data : json;
 
@@ -145,10 +149,10 @@ const ProductDetail: React.FC = () => {
           name: p.name || 'Product',
           description: p.description || '',
           types: Array.isArray(p.types) && p.types.length ? p.types : ['Default'],
-          sizes: Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ['M'],
+          sizes: ['S', 'M', 'L', 'XL', 'XXL'],
           price: Number(p.price) || 0,
           image: getFullImageUrl(primary) || '/images/jersey1.jpg',
-          gallery: gallery.length ? gallery : [ getFullImageUrl(primary) || '/images/jersey1.jpg' ],
+          gallery: gallery.length ? gallery : [getFullImageUrl(primary) || '/images/jersey1.jpg'],
           availableBadges: Array.isArray(p.availableBadges) ? p.availableBadges : [],
           pricePerCustomization: Number(p.pricePerCustomization) || 0,
         };
@@ -161,7 +165,7 @@ const ProductDetail: React.FC = () => {
         setMainImage(mapped.image);
 
       } catch (err) {
-        console.error('Error fetching product:', err);
+        console.error('[ShopPage] Error fetching product:', err);
         setError('Failed to load product. Please try again later.');
         setProduct(null);
       } finally {
@@ -176,6 +180,7 @@ const ProductDetail: React.FC = () => {
     if (!id) return;
 
     const fetchRelated = async () => {
+      console.log('[ShopPage] Fetching related products for ID:', id);
       setRelatedLoading(true);
       try {
         const res = await fetch(`${apiUrl}/products/related/${id}`);
@@ -192,10 +197,10 @@ const ProductDetail: React.FC = () => {
             name: p.name || 'Product',
             description: p.description || '',
             types: Array.isArray(p.types) ? p.types : ['Default'],
-            sizes: Array.isArray(p.sizes) ? p.sizes : ['M'],
+            sizes: ['S', 'M', 'L', 'XL', 'XXL'],
             price: Number(p.price) || 0,
             image: getFullImageUrl(primary) || '/images/jersey1.jpg',
-            gallery: gallery.length ? gallery : [ getFullImageUrl(primary) || '/images/jersey1.jpg' ],
+            gallery: gallery.length ? gallery : [getFullImageUrl(primary) || '/images/jersey1.jpg'],
             availableBadges: Array.isArray(p.availableBadges) ? p.availableBadges : [],
             pricePerCustomization: Number(p.pricePerCustomization) || 0,
           } as Product;
@@ -333,16 +338,16 @@ const ProductDetail: React.FC = () => {
                   <Disclosure.Panel className="pb-4 space-y-3">
                     <div>
                       <label className={labelClass}>Player Name</label>
-                      <input type="text" maxLength={15} value={customization.playerName} onChange={(e) => setCustomization({...customization, playerName: e.target.value})} placeholder="Enter name (e.g., FANTASY)" className={inputClass} />
+                      <input type="text" maxLength={15} value={customization.playerName} onChange={(e) => setCustomization({ ...customization, playerName: e.target.value })} placeholder="Enter name (e.g., FANTASY)" className={inputClass} />
                       <p className="text-xs text-gray-500 mt-1">Max 15 characters</p>
                     </div>
                     <div>
                       <label className={labelClass}>Player Number</label>
-                      <input type="text" maxLength={2} value={customization.playerNumber} onChange={(e) => setCustomization({...customization, playerNumber: e.target.value.replace(/[^0-9]/g,'')})} placeholder="Enter number (e.g., 10)" className={inputClass} />
+                      <input type="text" maxLength={2} value={customization.playerNumber} onChange={(e) => setCustomization({ ...customization, playerNumber: e.target.value.replace(/[^0-9]/g, '') })} placeholder="Enter number (e.g., 10)" className={inputClass} />
                     </div>
                     <div>
                       <label className={labelClass}>Select Badge</label>
-                      <select value={customization.selectedBadge} onChange={(e) => setCustomization({...customization, selectedBadge: e.target.value})} className={inputClass}>
+                      <select value={customization.selectedBadge} onChange={(e) => setCustomization({ ...customization, selectedBadge: e.target.value })} className={inputClass}>
                         <option value="">No badge</option>
                         {product.availableBadges?.map((badge, idx) => (<option key={idx} value={badge}>{badge}</option>))}
                       </select>
@@ -369,7 +374,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => {
                   const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
                   if (!isLoggedIn) {
@@ -379,11 +384,24 @@ const ProductDetail: React.FC = () => {
                     window.location.href = '/login';
                     return;
                   }
-                  alert('Added to Bag!');
-                }} 
+
+                  console.log('[ShopPage] Adding to cart:', {
+                    productId: product.id,
+                    quantity,
+                    size: selectedSize,
+                    type: selectedType,
+                    customization: isCustomized ? customization : undefined
+                  });
+
+                  addToCart(product, quantity, {
+                    size: selectedSize,
+                    type: selectedType,
+                    customization: isCustomized ? customization : undefined
+                  });
+                }}
                 className="w-full bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider"
               >
-                <ShoppingBagIcon className='w-5 h-5'/> Add to Bag
+                <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
               </button>
             </div>
           </div>

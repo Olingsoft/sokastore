@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { Menu as HeadlessMenu, Transition } from '@headlessui/react';
 import { Search, Menu as MenuIcon, X, User, ShoppingCart, LogOut, UserCircle, Package } from 'lucide-react';
+import { useCart } from "../context/CartContext";
 
 type User = {
   id: string;
@@ -18,6 +19,7 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { cartCount, refreshCart } = useCart();
 
   useEffect(() => {
     // Check if user is logged in
@@ -25,6 +27,7 @@ export default function Header() {
     if (userData) {
       try {
         setUser(JSON.parse(userData));
+        refreshCart();
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
@@ -38,6 +41,7 @@ export default function Header() {
     }
     setUser(null);
     setOpen(false);
+    refreshCart();
     router.push('/');
   };
 
@@ -117,9 +121,8 @@ export default function Header() {
                     {({ active }) => (
                       <Link
                         href="/account"
-                        className={`${
-                          active ? 'bg-gray-800' : ''
-                        } flex items-center px-4 py-2 text-sm text-white`}
+                        className={`${active ? 'bg-gray-800' : ''
+                          } flex items-center px-4 py-2 text-sm text-white`}
                       >
                         <User className="w-4 h-4 mr-2" />
                         My Profile
@@ -130,9 +133,8 @@ export default function Header() {
                     {({ active }) => (
                       <Link
                         href="/orders"
-                        className={`${
-                          active ? 'bg-gray-800' : ''
-                        } flex items-center px-4 py-2 text-sm text-white`}
+                        className={`${active ? 'bg-gray-800' : ''
+                          } flex items-center px-4 py-2 text-sm text-white`}
                       >
                         <Package className="w-4 h-4 mr-2" />
                         My Orders
@@ -143,9 +145,8 @@ export default function Header() {
                     {({ active }) => (
                       <button
                         onClick={handleLogout}
-                        className={`${
-                          active ? 'bg-gray-800' : ''
-                        } w-full text-left px-4 py-2 text-sm text-white flex items-center`}
+                        className={`${active ? 'bg-gray-800' : ''
+                          } w-full text-left px-4 py-2 text-sm text-white flex items-center`}
                       >
                         <LogOut className="w-4 h-4 mr-2" />
                         Logout
@@ -177,7 +178,7 @@ export default function Header() {
           >
             <ShoppingCart className="w-6 h-6" />
             <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              0
+              {cartCount}
             </span>
           </Link>
         </div>
@@ -207,7 +208,7 @@ export default function Header() {
               </button>
             </form>
           </div>
-          
+
           {/* Mobile Navigation */}
           <nav className="flex flex-col py-4 space-y-1">
             <Link href="/" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
@@ -219,7 +220,7 @@ export default function Header() {
             <Link href="/collections" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
               Collections
             </Link>
-            
+
             {user ? (
               <>
                 <Link href="/account" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition flex items-center" onClick={() => setOpen(false)}>
