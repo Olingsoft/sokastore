@@ -198,7 +198,7 @@ export default function AdminProducts() {
                   <th className="px-6 py-4 text-left text-sm font-semibold">Product Name</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold">Category</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold">Price</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Stock</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold">Size</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -276,15 +276,7 @@ export default function AdminProducts() {
                         </td>
                         <td className="px-6 py-4 font-semibold">${product.price}</td>
                         <td className="px-6 py-4">
-                          {(!product.stock || product.stock > 10) ? (
-                            <span className="text-green-400">
-                              {product.stock || 'N/A'} in stock
-                            </span>
-                          ) : (
-                            <span className="text-yellow-400">
-                              Low ({product.stock})
-                            </span>
-                          )}
+                         {product.size}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">

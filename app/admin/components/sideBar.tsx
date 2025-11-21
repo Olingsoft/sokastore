@@ -1,5 +1,5 @@
 'use client'
-import { LayoutDashboard, ShoppingBag, Tag, Users, ClipboardList, LogOut, Package } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Tag, Users, ClipboardList, LogOut, Package, Heart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -24,11 +24,11 @@ const Sidebar = () => {
         <Link href="/admin" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <LayoutDashboard size={20} /> Dashboard
         </Link>
-        <Link href="/admin/stock" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
-          <Package size={20} /> Stock Management
-        </Link>
         <Link href="/admin/products" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <ShoppingBag size={20} /> Products
+        </Link>
+          <Link href="/admin/stock" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
+          <Package size={20} /> Stock Management
         </Link>
         <Link href="/admin/category" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <Tag size={20} /> Categories
@@ -38,6 +38,9 @@ const Sidebar = () => {
         </Link>
         <Link href="/admin/users" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <Users size={20} /> Users
+        </Link>
+        <Link href="/admin/whishlist" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
+          <Heart size={20} /> Wishlist
         </Link>
       </nav>
 

@@ -1,14 +1,22 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
 import { ChevronDownIcon, ArrowLeftIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Link from 'next/link';
 
+interface ProductImage {
+  id?: number;
+  url: string;
+  isPrimary?: boolean;
+  position?: number;
+}
+
 interface Product {
-  id: string;
+  id: string | number;
   name: string;
   description: string;
   types: string[];
@@ -26,35 +34,40 @@ interface CustomizationOptions {
   selectedBadge: string;
 }
 
-const mockProduct: Product = {
-  id: '1',
-  name: 'Premium Football Jersey',
-  description: 'High-quality football jersey made with breathable fabric for maximum comfort during games. Features moisture-wicking technology to keep you dry.',
-  types: ['Home', 'Away', 'Third'],
-  sizes: ['S', 'M', 'L', 'XL'],
-  price: 89.99,
-  image: '/images/Jersey1.jpg',
-  gallery: [
-    '/images/Jersey1.jpg',
-    '/images/Jersey2.webp',
-    '/images/ads1.jpg',
-  ],
-  availableBadges: [
-    'Premier League',
-    'La Liga',
-    'Champions League',
-    'Europa League',
-    'International',
-    'Custom'
-  ],
-  pricePerCustomization: 15.00,
+// Helper function to get primary image
+const getPrimaryImage = (images: ProductImage[] = []): string => {
+  if (!images || images.length === 0) return '';
+
+  const primaries = images.filter(img => img.isPrimary);
+  if (primaries.length > 0) {
+    const chosen = [...primaries].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))[0];
+    return (chosen?.url || '').trim();
+  }
+
+  const sortedImages = [...images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  return (sortedImages[0]?.url || '').trim();
 };
 
-const mockRelatedProducts: Product[] = [
-  { id: '2', name: 'Training Jersey', description: '', types: ['Black', 'White'], sizes: ['S','M','L','XL'], price: 69.99, image: '/images/Jersey2.webp' },
-  { id: '3', name: 'Goalkeeper Jersey', description: '', types: ['Home','Away'], sizes: ['M','L','XL','XXL'], price: 94.99, image: '/images/ads1.jpg' },
-  { id: '4', name: 'Vintage Retro Jersey', description: '', types: ['Retro'], sizes: ['S','M','L'], price: 79.99, image: '/images/Jersey1.jpg' },
-];
+// Helper function to construct full image URL
+const getFullImageUrl = (imagePath: string): string => {
+  if (!imagePath) {
+    return '';
+  }
+
+  // If the path is already an absolute URL, return it directly.
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+
+  // Normalize path to remove ONLY a leading slash or the "public/" prefix
+  let normalizedPath = imagePath.replace(/^public\//, '').replace(/^\//, '');
+
+  const fullUrl = `${baseUrl}/${normalizedPath}`;
+
+  return fullUrl;
+};
 
 const OptionPill = ({ label, isSelected, onClick }: { label: string, isSelected: boolean, onClick: () => void }) => (
   <button
@@ -69,7 +82,16 @@ const ProductCard = ({ product }: { product: Product }) => (
   <div className="bg-[#1E1E1E] rounded-lg overflow-hidden shadow-xl border border-gray-800 hover:border-teal-400 transition-all duration-300">
     <Link href={`/product/${product.id}`}>
       <div className="relative pb-[100%] bg-gray-800">
-        <img src={product.image} alt={product.name} className="absolute text-white inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+        <img
+          src={product.image || '/images/jersey1.jpg'}
+          alt={product.name}
+          className="absolute text-white inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = '/images/jersey1.jpg';
+            target.onerror = null;
+          }}
+        />
       </div>
     </Link>
     <div className="p-3">
@@ -82,22 +104,146 @@ const ProductCard = ({ product }: { product: Product }) => (
   </div>
 );
 
-const ProductDetail = ({ product: propProduct }: { product?: Product }) => {
-  const product = propProduct || mockProduct;
-  const [selectedType, setSelectedType] = useState(product.types[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
-  const [quantity, setQuantity] = useState(1);
-  const [mainImage, setMainImage] = useState(product.image);
+const ProductDetail: React.FC = () => {
+  const params = useParams();
+  const id = params?.id as string | undefined;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [relatedLoading, setRelatedLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // UI state
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [quantity, setQuantity] = useState<number>(1);
+  const [mainImage, setMainImage] = useState<string>('');
   const [customization, setCustomization] = useState<CustomizationOptions>({ playerName:'', playerNumber:'', selectedBadge:'' });
-  const isCustomized = !!(customization.playerName || customization.playerNumber || customization.selectedBadge);
-  const customizationFee = isCustomized ? (product.pricePerCustomization || 0) : 0;
-  const totalPrice = (product.price + customizationFee) * quantity;
 
   useEffect(() => {
+    if (!id) return;
+
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${apiUrl}/products/${id}`);
+        if (!res.ok) throw new Error(`Failed to fetch product: ${res.status}`);
+        const json = await res.json();
+        // The API may return { data: product } or the product directly - handle both
+        const p = (json?.data) ? json.data : json;
+
+        // Map backend response to our Product type
+        const images: ProductImage[] = Array.isArray(p.images) ? p.images : [];
+        const primary = getPrimaryImage(images);
+        const gallery = images.map(img => getFullImageUrl(img.url || (img as any)));
+
+        const mapped: Product = {
+          id: p.id,
+          name: p.name || 'Product',
+          description: p.description || '',
+          types: Array.isArray(p.types) && p.types.length ? p.types : ['Default'],
+          sizes: Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ['M'],
+          price: Number(p.price) || 0,
+          image: getFullImageUrl(primary) || '/images/jersey1.jpg',
+          gallery: gallery.length ? gallery : [ getFullImageUrl(primary) || '/images/jersey1.jpg' ],
+          availableBadges: Array.isArray(p.availableBadges) ? p.availableBadges : [],
+          pricePerCustomization: Number(p.pricePerCustomization) || 0,
+        };
+
+        setProduct(mapped);
+
+        // initialize UI selections based on product
+        setSelectedType(mapped.types[0]);
+        setSelectedSize(mapped.sizes[0]);
+        setMainImage(mapped.image);
+
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError('Failed to load product. Please try again later.');
+        setProduct(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id, apiUrl]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchRelated = async () => {
+      setRelatedLoading(true);
+      try {
+        const res = await fetch(`${apiUrl}/products/related/${id}`);
+        if (!res.ok) throw new Error(`Failed to fetch related products: ${res.status}`);
+        const json = await res.json();
+        const list = Array.isArray(json?.data) ? json.data : (Array.isArray(json) ? json : []);
+
+        const mapped = list.map((p: any) => {
+          const images: ProductImage[] = Array.isArray(p.images) ? p.images : [];
+          const primary = getPrimaryImage(images);
+          const gallery = images.map(img => getFullImageUrl(img.url || (img as any)));
+          return {
+            id: p.id,
+            name: p.name || 'Product',
+            description: p.description || '',
+            types: Array.isArray(p.types) ? p.types : ['Default'],
+            sizes: Array.isArray(p.sizes) ? p.sizes : ['M'],
+            price: Number(p.price) || 0,
+            image: getFullImageUrl(primary) || '/images/jersey1.jpg',
+            gallery: gallery.length ? gallery : [ getFullImageUrl(primary) || '/images/jersey1.jpg' ],
+            availableBadges: Array.isArray(p.availableBadges) ? p.availableBadges : [],
+            pricePerCustomization: Number(p.pricePerCustomization) || 0,
+          } as Product;
+        });
+
+        setRelatedProducts(mapped);
+      } catch (err) {
+        console.error('Error fetching related products:', err);
+        setRelatedProducts([]);
+      } finally {
+        setRelatedLoading(false);
+      }
+    };
+
+    fetchRelated();
+  }, [id, apiUrl]);
+
+  // Keep derived UI values in sync when product state changes
+  useEffect(() => {
+    if (!product) return;
     setSelectedType(product.types[0]);
     setSelectedSize(product.sizes[0]);
     setMainImage(product.image);
   }, [product]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#141313]">
+        <div className="text-gray-400">Loading product...</div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-[#141313]">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12">
+          <div className="text-center text-red-500">{error || 'Product not found.'}</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isCustomized = !!(customization.playerName || customization.playerNumber || customization.selectedBadge);
+  const customizationFee = isCustomized ? (product.pricePerCustomization || 0) : 0;
+  const totalPrice = (product.price + customizationFee) * quantity;
 
   const inputClass = "w-full bg-[#2A2A2A] border border-gray-700 text-white rounded-md py-2 px-3 text-sm focus:ring-teal-400 focus:border-teal-400 focus:outline-none transition-all";
   const labelClass = "block text-xs font-medium text-gray-400 mb-1 tracking-wider uppercase";
@@ -117,11 +263,30 @@ const ProductDetail = ({ product: propProduct }: { product?: Product }) => {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 grid lg:grid-cols-2 gap-8">
           {/* Left: Images */}
           <div className="flex flex-col gap-3 lg:sticky lg:top-20 self-start z-10">
-            <img src={mainImage} alt={product.name} className="rounded-lg shadow-2xl object-cover w-full h-auto max-h-[500px] border border-gray-800" />
+            <img
+              src={mainImage || '/images/jersey1.jpg'}
+              alt={product.name}
+              className="rounded-lg shadow-2xl object-cover w-full h-auto max-h-[500px] border border-gray-800"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/jersey1.jpg';
+                target.onerror = null;
+              }}
+            />
             <div className="flex gap-2 overflow-x-auto p-1">
               {product.gallery?.map((img, idx) => (
-                <img key={idx} src={img} alt={img} onClick={() => setMainImage(img)} 
-                  className={`w-14 h-14 object-cover rounded-md cursor-pointer transition ring-2 ${img === mainImage ? 'ring-teal-400 scale-105' : 'ring-transparent hover:ring-gray-600'}`} />
+                <img
+                  key={idx}
+                  src={img || '/images/jersey1.jpg'}
+                  alt={`${product.name}-${idx}`}
+                  onClick={() => setMainImage(img || '/images/jersey1.jpg')}
+                  className={`w-14 h-14 object-cover rounded-md cursor-pointer transition ring-2 ${img === mainImage ? 'ring-teal-400 scale-105' : 'ring-transparent hover:ring-gray-600'}`}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/images/jersey1.jpg';
+                    target.onerror = null;
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -208,15 +373,12 @@ const ProductDetail = ({ product: propProduct }: { product?: Product }) => {
                 onClick={() => {
                   const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
                   if (!isLoggedIn) {
-                    // Store the current URL to redirect back after login
                     if (typeof window !== 'undefined') {
                       localStorage.setItem('redirectAfterLogin', window.location.pathname);
                     }
-                    // Redirect to login page
                     window.location.href = '/login';
                     return;
                   }
-                  // User is logged in, proceed with adding to bag
                   alert('Added to Bag!');
                 }} 
                 className="w-full bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider"
@@ -231,7 +393,13 @@ const ProductDetail = ({ product: propProduct }: { product?: Product }) => {
           <div className="max-w-7xl mx-auto">
             <h2 className="text-xl font-bold text-white mb-6">You Might Also Like</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {mockRelatedProducts.map((relatedProduct) => <ProductCard key={relatedProduct.id} product={relatedProduct} />)}
+              {relatedLoading ? (
+                <div className="col-span-full text-gray-400">Loading suggestions...</div>
+              ) : relatedProducts.length === 0 ? (
+                <div className="col-span-full text-gray-400">No related products found.</div>
+              ) : (
+                relatedProducts.map((relatedProduct) => <ProductCard key={relatedProduct.id} product={relatedProduct} />)
+              )}
             </div>
           </div>
         </section>

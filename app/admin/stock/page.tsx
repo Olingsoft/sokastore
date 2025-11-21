@@ -44,6 +44,7 @@ export default function StockPage() {
       const res = await fetch(`${apiUrl}/products`, { headers: authHeader });
       if (!res.ok) throw new Error('Failed to fetch products');
       const json = await res.json();
+      console.log('Products API response:', json);
       const list: any[] = Array.isArray(json?.data) ? json.data : [];
       // Fetch authoritative stock levels and merge
       let byId: Record<number, number> = {};
@@ -100,7 +101,7 @@ export default function StockPage() {
                 <thead className="bg-[#2A2A2A]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">SKU</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Quantity</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -118,7 +119,17 @@ export default function StockPage() {
                     products.map((p) => (
                       <tr key={p.id} className="hover:bg-[#2A2A2A]/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{p.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{p.sku || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {(p.stockQuantity ?? 0) < 50 ? (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-500 text-red-100">
+                              Out of stock
+                            </span>
+                          ) : (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-500 text-green-100">
+                              In stock
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{p.stockQuantity ?? 0}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end gap-2">

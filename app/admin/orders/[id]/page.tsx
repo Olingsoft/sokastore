@@ -182,11 +182,11 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="flex w-full">
+      <div className="flex w-full ">
         <Sidebar />
-        <main className="ml-64 flex-1 min-h-screen bg-[#141313] text-white">
+        <main className="ml-64 flex-1 w-full min-h-screen bg-[#141313] text-white">
           <Header />
-          <section className="p-8">
+          <section className="p-8 w-full">
             <div className="text-center py-12">
               <h2 className="text-2xl font-bold mb-4">Order Not Found</h2>
               <p className="text-gray-400 mb-6">The order you're looking for doesn't exist.</p>
@@ -204,7 +204,7 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="flex">
+    <div className="flex w-full">
       <Sidebar />
       <main className="ml-64 flex-1 min-h-screen bg-[#141313] text-white">
         <Header />
