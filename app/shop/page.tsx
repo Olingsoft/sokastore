@@ -44,8 +44,7 @@ const getFullImageUrl = (imagePath: string): string => {
 
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   let normalizedPath = imagePath.replace(/^\/|\/public\//, '');
-  const fullUrl = `${baseUrl}/${normalizedPath}`;
-  return fullUrl;
+  return `${baseUrl}/${normalizedPath}`;
 };
 
 interface ProductCardProps {
@@ -54,21 +53,20 @@ interface ProductCardProps {
   onToggleWishlist: () => void;
 }
 
-// ------------------ SMALLER PRODUCT CARD ------------------
+// ------------------ PRODUCT CARD ------------------
 const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardProps) => {
   const safeImage = product.image || "/images/jersey1.jpg";
 
   return (
-    <Link href={`/shop/${product.id}`} className="block">
-      <div
-        className={`group bg-white rounded-lg shadow-md overflow-hidden transition duration-300 hover:shadow-xl hover:-translate-y-1 border-t-4 ${product.accentColor}`}
-      >
-        <div className="relative aspect-[2/2] overflow-hidden">
+    <Link href={`/shop/${product.id}`} className="block group h-[250px] w-full">
+      <div className="bg-[#1E1E1E] rounded-lg overflow-hidden shadow-lg border border-gray-800 hover:border-teal-400 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-400/20 h-full flex flex-col">
+        {/* Image */}
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#2A2A2A]">
           {safeImage ? (
             <img
               src={safeImage}
               alt={product.name}
-              className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "/images/jersey1.jpg";
@@ -76,17 +74,19 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardPro
               }}
             />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+            <div className="w-full h-full bg-[#2A2A2A] flex items-center justify-center text-xs text-gray-500">
               No Image
             </div>
           )}
 
-          <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[8px] font-bold bg-gray-900 text-white rounded-full uppercase tracking-wider">
+          {/* Category Badge */}
+          <span className="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold bg-teal-400 text-[#141313] rounded-full uppercase tracking-wider">
             {product.category}
           </span>
 
+          {/* Wishlist Button */}
           <button
-            className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white shadow"
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-all"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -94,27 +94,29 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardPro
             }}
           >
             <Heart
-              size={13}
-              className={isWishlisted ? "text-red-500" : "text-gray-500"}
+              size={14}
+              className={isWishlisted ? "text-red-500" : "text-white"}
               fill={isWishlisted ? "currentColor" : "none"}
             />
           </button>
+
+          {/* Hover Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
-        <div className="p-2 text-center">
-          <h3 className="text-[13px] font-bold text-gray-900 leading-tight">
-            {product.team}
-            <span className="text-[9px] font-medium text-gray-500 block">
-              {product.name}
-            </span>
+        {/* Content */}
+        <div className="p-2.5 flex flex-col flex-grow">
+          <h3 className="text-sm font-bold text-white leading-tight line-clamp-1 mb-0.5">
+            {product.name}
           </h3>
+          <p className="text-xs text-gray-400 line-clamp-1 mb-2">{product.team}</p>
 
-          <p className="text-[12px] font-bold text-green-600 mt-1 mb-1">
-            ${product.price.toFixed(2)}
-          </p>
-
-          <div className="flex items-center justify-center w-full px-2 py-1 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 transition duration-300 text-[9px]">
-            View Details <ArrowRight className="ml-1" size={11} />
+          {/* Price and Action */}
+          <div className="flex items-center justify-between mt-auto">
+            <span className="text-lg font-bold text-teal-400">${product.price.toFixed(2)}</span>
+            <div className="flex items-center text-xs text-gray-400 group-hover:text-teal-400 transition-colors">
+              View <ArrowRight className="ml-0.5" size={12} />
+            </div>
           </div>
         </div>
       </div>
@@ -194,13 +196,12 @@ export default function ShopPage() {
           </button>
         </div>
 
-        {/* Filters Section (unchanged) */}
+        {/* Filters Section */}
         <section
-          className={`bg-[#141313] text-white py-4 px-4 sm:px-6 md:px-12 transition-all duration-300 ${
-            showFilters ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-          }`}
+          className={`bg-[#141313] text-white py-4 px-4 sm:px-6 md:px-12 transition-all duration-300 ${showFilters ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+            }`}
         >
-          {/* You can place your filter controls here */}
+          {/* Place your filter controls here */}
         </section>
 
         {/* Products Grid */}
@@ -230,8 +231,6 @@ export default function ShopPage() {
                 ))
               )}
             </div>
-
-            {/* Pagination (unchanged) */}
           </div>
         </section>
       </main>

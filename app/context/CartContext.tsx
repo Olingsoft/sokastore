@@ -30,7 +30,7 @@ interface CartContextType {
     addToCart: (product: any, quantity: number, options: any) => Promise<void>;
     removeFromCart: (itemId: number) => Promise<void>;
     updateQuantity: (itemId: number, quantity: number) => Promise<void>;
-    refreshCart: () => Promise<void>;
+    fetchCart: () => Promise<void>;
     clearCart: () => Promise<void>;
 }
 
@@ -44,36 +44,55 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-    const refreshCart = async () => {
-        const token = getToken();
-        if (!token) {
-            setCartItems([]);
-            return;
-        }
+    const fetchCart = async () => {
+        setIsLoading(true);
 
         try {
-            const res = await fetch(`${apiUrl}/cart`, {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                console.log('No token found, clearing cart');
+                setCartItems([]);
+                setIsLoading(false);
+                return;
+            }
+
+            console.log('Fetching cart from backend...');
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cart`, {
+                method: "GET",
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                // The backend might return { items: [...] } or just [...]
-                const items = data.items || data || [];
-                setCartItems(Array.isArray(items) ? items : []);
-            } else {
-                // If 404 or 401, maybe clear cart
-                if (res.status === 401) setCartItems([]);
+            console.log('Cart fetch response status:', res.status);
+
+            if (!res.ok) {
+                console.error('Failed to fetch cart, status:', res.status);
+                if (res.status === 401) {
+                    setCartItems([]);
+                }
+                setIsLoading(false);
+                return;
             }
+
+            const data = await res.json();
+            console.log('Cart data received:', data);
+
+            setCartItems(data.items || []); // store items
         } catch (error) {
-            console.error("Failed to fetch cart", error);
+            console.error("Failed to fetch cart:", error);
+            setCartItems([]);
         }
+
+        setIsLoading(false);
     };
 
+    // Load cart on mount
     useEffect(() => {
-        refreshCart();
+        console.log('CartContext mounted, fetching cart...');
+        fetchCart();
     }, []);
 
     const addToCart = async (product: any, quantity: number, options: any) => {
@@ -114,7 +133,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             }
 
             toast.success("Added to cart successfully!", { id: toastId });
-            await refreshCart();
+            await fetchCart();
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || "Failed to add item to cart", { id: toastId });
@@ -139,7 +158,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             if (!res.ok) throw new Error('Failed to remove item');
 
             toast.success("Item removed", { id: toastId });
-            await refreshCart();
+            await fetchCart();
         } catch (error) {
             console.error(error);
             toast.error("Failed to remove item", { id: toastId });
@@ -163,7 +182,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
             if (!res.ok) throw new Error('Failed to update quantity');
 
-            await refreshCart();
+            await fetchCart();
         } catch (error) {
             console.error(error);
             toast.error("Failed to update quantity");
@@ -191,7 +210,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 0), 0);
 
     return (
-        <CartContext.Provider value={{ cartItems, cartCount, isLoading, addToCart, removeFromCart, updateQuantity, refreshCart, clearCart }}>
+        <CartContext.Provider value={{ cartItems, cartCount, isLoading, addToCart, removeFromCart, updateQuantity, fetchCart, clearCart }}>
             {children}
         </CartContext.Provider>
     );

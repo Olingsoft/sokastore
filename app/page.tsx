@@ -46,46 +46,42 @@ const getFullImageUrl = (imagePath: string): string => {
 
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   let normalizedPath = imagePath.replace(/^\/|\/public\//, '');
-  const fullUrl = `${baseUrl}/${normalizedPath}`;
-  return fullUrl;
+  return `${baseUrl}/${normalizedPath}`;
 };
 
 // --- PRODUCT CARD COMPONENT ---
 const ProductCard = ({ product }: { product: ShopProduct }) => {
-  // Ensure we have a valid image or fallback
   const safeImage = product.image || "/images/jersey1.jpg";
 
   return (
-    <Link href={`/shop/${product.id}`} className="block">
-      <div
-        className={`group bg-white rounded-lg shadow-md overflow-hidden transition duration-300 hover:shadow-xl hover:-translate-y-1 border-t-4 ${product.accentColor} relative h-full`}
-      >
-        <div className="relative aspect-square overflow-hidden">
+    <Link href={`/shop/${product.id}`} className="block group h-[250px] w-full">
+      <div className="bg-[#1E1E1E] rounded-lg overflow-hidden shadow-lg border border-gray-800 hover:border-teal-400 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-400/20 h-full flex flex-col">
+        {/* Image */}
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#2A2A2A]">
           <Image
             src={safeImage}
             alt={product.name}
-            width={250}
-            height={250}
-            className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-            onError={(e) => {
-              // Note: Next.js Image component handles onError differently, 
-              // but for simplicity in this context we rely on the src being valid 
-              // or the fallback provided in safeImage.
-            }}
+            width={290}
+            height={200}
+            className="w-full object-cover transition duration-500 group-hover:scale-110"
           />
-          <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold bg-gray-900 text-white rounded-full uppercase tracking-wider">
+          <span className="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold bg-teal-400 text-[#141313] rounded-full uppercase tracking-wider">
             {product.category}
           </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
-        <div className="p-3 text-center">
-          <h3 className="text-base font-bold text-gray-900 leading-tight">
-            {product.team}
-            <span className="text-xs font-medium text-gray-500 block">{product.name}</span>
+        {/* Content */}
+        <div className="p-2.5 flex flex-col flex-grow">
+          <h3 className="text-sm font-bold text-white leading-tight line-clamp-1 mb-0.5">
+            {product.name}
           </h3>
-          <p className="text-lg font-bold text-green-600 mb-2 mt-1">${product.price.toFixed(2)}</p>
-          <div className="flex items-center justify-center w-full px-3 py-1.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800 transition duration-300 text-xs">
-            View Details <ArrowRight className="ml-1" size={14} />
+          <p className="text-xs text-gray-400 line-clamp-1 mb-2">{product.team}</p>
+          <div className="flex items-center justify-between mt-auto">
+            <span className="text-lg font-bold text-teal-400">${product.price.toFixed(2)}</span>
+            <div className="flex items-center text-xs text-gray-400 group-hover:text-teal-400 transition-colors">
+              View <ArrowRight className="ml-0.5" size={12} />
+            </div>
           </div>
         </div>
       </div>
@@ -118,11 +114,11 @@ export default function LandingPage() {
           return {
             id: p.id,
             name: p.name || "Jersey",
-            team: p.name || "Jersey", // Using name as team for now as per shop logic
+            team: p.name || "Jersey",
             price: Number(p.price) || 0,
             image: full || "/images/jersey1.jpg",
             category: p.category || "Jersey",
-            accentColor: "border-green-600", // Default accent
+            accentColor: "border-green-600",
           };
         });
 
@@ -139,10 +135,7 @@ export default function LandingPage() {
     fetchProducts();
   }, [apiUrl]);
 
-  // Filter products for different sections
-  const newArrivals = products.slice(0, 4); // Just taking the first 4 as "New Jerseys"
-
-  // Helper to get products by category (case-insensitive partial match or exact)
+  const newArrivals = products.slice(0, 4);
   const getProductsByCategory = (category: string) => {
     return products.filter(p => p.category.toLowerCase().includes(category.toLowerCase()));
   };
@@ -220,7 +213,7 @@ export default function LandingPage() {
 
       {/* Floating WhatsApp Icon */}
       <a
-        href="https://wa.me/254769210601" // Replace with your number
+        href="https://wa.me/254769210601"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center z-50 transition-transform hover:scale-110"

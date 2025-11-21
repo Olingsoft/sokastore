@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
-import { ChevronDownIcon, ArrowLeftIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ArrowLeftIcon, ShoppingBagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Link from 'next/link';
@@ -123,6 +123,7 @@ const ProductDetail: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [mainImage, setMainImage] = useState<string>('');
   const [customization, setCustomization] = useState<CustomizationOptions>({ playerName: '', playerNumber: '', selectedBadge: '' });
+  const [isAddedToCart, setIsAddedToCart] = useState<boolean>(false);
 
   useEffect(() => {
     if (!id) return;
@@ -398,10 +399,29 @@ const ProductDetail: React.FC = () => {
                     type: selectedType,
                     customization: isCustomized ? customization : undefined
                   });
+
+                  // Show success state
+                  setIsAddedToCart(true);
+
+                  // Reset after 2 seconds
+                  setTimeout(() => {
+                    setIsAddedToCart(false);
+                  }, 2000);
                 }}
-                className="w-full bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider"
+                className={`w-full font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider ${isAddedToCart
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-teal-400 hover:bg-teal-500 text-[#141313]'
+                  }`}
               >
-                <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
+                {isAddedToCart ? (
+                  <>
+                    <CheckCircleIcon className='w-5 h-5' /> Added to Cart!
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
+                  </>
+                )}
               </button>
             </div>
           </div>
