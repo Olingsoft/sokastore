@@ -7,7 +7,7 @@ import { ShoppingBag, ArrowLeft, CheckCircle, Clock, XCircle, Truck, RefreshCw }
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-type OrderStatus = 'delivered' | 'processing' | 'cancelled' | 'shipped';
+type OrderStatus = 'delivered' | 'processing' | 'cancelled' | 'shipped' | 'pending' | 'confirmed';
 
 interface OrderItem {
   id: string;
@@ -35,68 +35,45 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState<'all' | OrderStatus>('all');
 
   useEffect(() => {
-    // Check if user is logged in
     const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
     if (!isLoggedIn) {
       router.push('/login');
       return;
     }
 
-    // Simulate API call to fetch orders
     const fetchOrders = async () => {
       try {
-        // Replace with actual API call
-        // const response = await fetch('/api/orders');
-        // const data = await response.json();
-        
-        // Mock data for demonstration
-        setTimeout(() => {
-          setOrders([
-            {
-              id: 'ORD-12345',
-              date: '2023-11-15',
-              status: 'delivered',
-              total: 89.97,
-              trackingNumber: '1Z999AA1234567890',
-              items: [
-                {
-                  id: '1',
-                  name: 'Premium Football Jersey',
-                  image: '/images/Jersey1.jpg',
-                  price: 29.99,
-                  quantity: 1,
-                  size: 'M'
-                },
-                {
-                  id: '2',
-                  name: 'Training Shorts',
-                  image: '/images/Jersey2.webp',
-                  price: 24.99,
-                  quantity: 2,
-                  size: 'L'
-                }
-              ]
-            },
-            {
-              id: 'ORD-12344',
-              date: '2023-11-10',
-              status: 'shipped',
-              total: 54.98,
-              trackingNumber: '1Z999BB1234567890',
-              items: [
-                {
-                  id: '3',
-                  name: 'Goalkeeper Gloves',
-                  image: '/images/ads1.jpg',
-                  price: 54.98,
-                  quantity: 1,
-                  size: 'M'
-                }
-              ]
-            }
-          ]);
-          setIsLoading(false);
-        }, 1000);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+
+        const data = await response.json();
+
+        const mappedOrders: Order[] = (data.orders || []).map((order: any) => ({
+          id: order.orderNumber,
+          date: order.createdAt,
+          status: order.orderStatus as OrderStatus,
+          total: Number(order.totalAmount),
+          trackingNumber: order.transactionId,
+          items: (order.items || []).map((item: any) => ({
+            id: item.id.toString(),
+            name: item.productName,
+            image: item.productImage || '/images/jersey1.jpg',
+            price: Number(item.price),
+            quantity: item.quantity,
+            size: item.size || 'N/A'
+          }))
+        }));
+
+        setOrders(mappedOrders);
+        setIsLoading(false);
       } catch (err) {
         setError('Failed to load orders. Please try again later.');
         setIsLoading(false);
@@ -112,7 +89,8 @@ export default function OrdersPage() {
       case 'delivered':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'processing':
-        return <RefreshCw className="w-5 h-5 text-yellow-500 animate-spin" />;
+      case 'confirmed':
+        return <RefreshCw className="w-5 h-5 text-yellow-500" />;
       case 'shipped':
         return <Truck className="w-5 h-5 text-blue-500" />;
       case 'cancelled':
@@ -126,8 +104,8 @@ export default function OrdersPage() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  const filteredOrders = activeTab === 'all' 
-    ? orders 
+  const filteredOrders = activeTab === 'all'
+    ? orders
     : orders.filter(order => order.status === activeTab);
 
   if (isLoading) {
@@ -137,8 +115,8 @@ export default function OrdersPage() {
         <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center space-x-4 mb-8">
-              <button 
-                onClick={() => router.back()} 
+              <button
+                onClick={() => router.back()}
                 className="text-gray-300 hover:text-teal-400 transition-colors"
               >
                 <ArrowLeft className="w-6 h-6" />
@@ -165,8 +143,8 @@ export default function OrdersPage() {
         <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center space-x-4 mb-8">
-              <button 
-                onClick={() => router.back()} 
+              <button
+                onClick={() => router.back()}
                 className="text-gray-300 hover:text-teal-400 transition-colors"
               >
                 <ArrowLeft className="w-6 h-6" />
@@ -177,7 +155,7 @@ export default function OrdersPage() {
               <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Something went wrong</h3>
               <p className="text-gray-300 mb-4">{error}</p>
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
               >
@@ -196,10 +174,9 @@ export default function OrdersPage() {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header with back button */}
           <div className="flex items-center space-x-4 mb-8">
-            <button 
-              onClick={() => router.back()} 
+            <button
+              onClick={() => router.back()}
               className="text-gray-300 hover:text-teal-400 transition-colors"
             >
               <ArrowLeft className="w-6 h-6" />
@@ -207,17 +184,15 @@ export default function OrdersPage() {
             <h1 className="text-2xl font-bold">My Orders</h1>
           </div>
 
-          {/* Order status tabs */}
           <div className="flex overflow-x-auto pb-2 mb-6 space-x-2">
-            {(['all', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map((tab) => (
+            {(['all', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-                  activeTab === tab
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${activeTab === tab
                     ? 'bg-teal-500 text-white'
                     : 'bg-[#1e1e1e] text-gray-300 hover:bg-[#2a2a2a]'
-                }`}
+                  }`}
               >
                 {tab === 'all' ? 'All Orders' : getStatusText(tab)}
               </button>
@@ -229,12 +204,12 @@ export default function OrdersPage() {
               <ShoppingBag className="w-16 h-16 text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No orders found</h3>
               <p className="text-gray-400 mb-6">
-                {activeTab === 'all' 
-                  ? "You haven't placed any orders yet." 
+                {activeTab === 'all'
+                  ? "You haven't placed any orders yet."
                   : `You don't have any ${activeTab} orders.`}
               </p>
-              <Link 
-                href="/shop" 
+              <Link
+                href="/shop"
                 className="inline-block bg-teal-500 hover:bg-teal-600 text-white font-medium px-6 py-2 rounded-lg transition-colors"
               >
                 Continue Shopping
@@ -244,7 +219,6 @@ export default function OrdersPage() {
             <div className="space-y-6">
               {filteredOrders.map((order) => (
                 <div key={order.id} className="bg-[#1e1e1e] rounded-lg overflow-hidden border border-gray-800">
-                  {/* Order header */}
                   <div className="p-4 border-b border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div className="mb-2 sm:mb-0">
                       <div className="flex items-center space-x-2">
@@ -270,13 +244,12 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Order items */}
                   <div className="divide-y divide-gray-800">
                     {order.items.map((item) => (
                       <div key={`${order.id}-${item.id}`} className="p-4 flex">
                         <div className="w-20 h-20 bg-gray-800 rounded-md overflow-hidden flex-shrink-0">
-                          <img 
-                            src={item.image} 
+                          <img
+                            src={item.image}
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />
@@ -294,12 +267,11 @@ export default function OrdersPage() {
                     ))}
                   </div>
 
-                  {/* Order footer */}
                   <div className="p-4 bg-[#252525] flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
                     <div className="flex items-center">
                       {order.trackingNumber && (
                         <div className="text-sm">
-                          <span className="text-gray-400">Tracking #: </span>
+                          <span className="text-gray-400">Transaction ID: </span>
                           <span className="font-medium">{order.trackingNumber}</span>
                         </div>
                       )}
