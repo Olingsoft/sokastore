@@ -105,25 +105,30 @@ const ProductCard = ({ product }: { product: Product }) => (
   </div>
 );
 
-const ProductDetail: React.FC = () => {
+export default function ProductDetailPage() {
   const params = useParams();
   const id = params?.id as string | undefined;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [relatedLoading, setRelatedLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const { addToCart } = useCart();
 
-  // UI state
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+
+  const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState('S');
+  const [selectedType, setSelectedType] = useState('Default');
   const [mainImage, setMainImage] = useState<string>('');
-  const [customization, setCustomization] = useState<CustomizationOptions>({ playerName: '', playerNumber: '', selectedBadge: '' });
-  const [isAddedToCart, setIsAddedToCart] = useState<boolean>(false);
+  const [customization, setCustomization] = useState<CustomizationOptions>({
+    playerName: '',
+    playerNumber: '',
+    selectedBadge: '',
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // New state for modal
 
   useEffect(() => {
     if (!id) return;
@@ -397,31 +402,16 @@ const ProductDetail: React.FC = () => {
                   addToCart(product, quantity, {
                     size: selectedSize,
                     type: selectedType,
-                    customization: isCustomized ? customization : undefined
+                    customization: isCustomized ? customization : undefined,
+                    customizationFee: isCustomized ? customizationFee : 0
                   });
 
-                  // Show success state
-                  setIsAddedToCart(true);
-
-                  // Reset after 2 seconds
-                  setTimeout(() => {
-                    setIsAddedToCart(false);
-                  }, 2000);
+                  // Show success modal
+                  setShowSuccessModal(true);
                 }}
-                className={`w-full font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider ${isAddedToCart
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
-                    : 'bg-teal-400 hover:bg-teal-500 text-[#141313]'
-                  }`}
+                className="w-full font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider bg-teal-400 hover:bg-teal-500 text-[#141313]"
               >
-                {isAddedToCart ? (
-                  <>
-                    <CheckCircleIcon className='w-5 h-5' /> Added to Cart!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
-                  </>
-                )}
+                <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
               </button>
             </div>
           </div>
@@ -443,8 +433,39 @@ const ProductDetail: React.FC = () => {
         </section>
       </main>
       <Footer />
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E1E1E] rounded-xl p-6 max-w-md w-full border border-gray-700 shadow-2xl">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-teal-400 rounded-full p-3">
+                <CheckCircleIcon className="w-8 h-8 text-[#141313]" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-white text-center mb-2">
+              Added to Cart!
+            </h3>
+            <p className="text-gray-400 text-center mb-6">
+              {product.name} has been added to your cart.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/cart"
+                className="flex-1 bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg text-center transition"
+              >
+                Go to Cart
+              </Link>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg transition"
+              >
+                Continue Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default ProductDetail;
+}

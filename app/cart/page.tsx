@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
@@ -30,9 +30,28 @@ const getProductPrice = (item: CartItem) => {
     return Number(item.price) || Number(item.product?.price) || 0;
 };
 
+interface RelatedProduct {
+    id: number;
+    name: string;
+    price: number;
+    categoryId?: number;
+    images: Array<{ url: string; isPrimary: boolean }>;
+}
+
+const getFullImageUrl = (imagePath: string): string => {
+    if (!imagePath) return '/images/jersey1.jpg';
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+    const normalizedPath = imagePath.replace(/^\/|\/public\//, '');
+    return `${baseUrl}/${normalizedPath}`;
+};
+
 export default function CartPage() {
     const router = useRouter();
     const { cartItems, removeFromCart, updateQuantity, isLoading } = useCart();
+    const [relatedProducts, setRelatedProducts] = useState<RelatedProduct[]>([]);
+    const [loadingRelated, setLoadingRelated] = useState(false);
 
     useEffect(() => {
         const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
@@ -41,6 +60,51 @@ export default function CartPage() {
             return;
         }
     }, [router]);
+
+    // Fetch related products (same category as cart items)
+    useEffect(() => {
+        const fetchRelatedProducts = async () => {
+            if (cartItems.length === 0) {
+                setRelatedProducts([]);
+                return;
+            }
+
+            setLoadingRelated(true);
+            try {
+                // Get category from first cart item
+                const firstItem = cartItems[0];
+                const categoryId = firstItem.product?.categoryId;
+
+                if (!categoryId) {
+                    // Fallback: fetch random products if no category
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?limit=4`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setRelatedProducts(data.products || []);
+                    }
+                    return;
+                }
+
+                // Fetch products from same category
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products?categoryId=${categoryId}&limit=8`);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Filter out products already in cart
+                    const cartProductIds = cartItems.map(item => item.productId);
+                    const filtered = (data.products || []).filter(
+                        (p: RelatedProduct) => !cartProductIds.includes(p.id)
+                    ).slice(0, 4);
+                    setRelatedProducts(filtered);
+                }
+            } catch (error) {
+                console.error('Error fetching related products:', error);
+            } finally {
+                setLoadingRelated(false);
+            }
+        };
+
+        fetchRelatedProducts();
+    }, [cartItems]);
 
     const subtotal = cartItems.reduce((acc, item) => {
         const price = getProductPrice(item);
@@ -188,6 +252,54 @@ export default function CartPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* RELATED PRODUCTS SECTION */}
+                    {relatedProducts.length > 0 && (
+                        <div className="mt-16">
+                            <h2 className="text-2xl font-bold tracking-wide mb-6 border-b border-[#1E1E1E] pb-3">
+                                You May Also Like
+                            </h2>
+
+                            {loadingRelated ? (
+                                <div className="text-gray-400 text-center py-8">Loading related products...</div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {relatedProducts.map((product) => {
+                                        const primaryImage = product.images?.find(img => img.isPrimary)?.url || product.images?.[0]?.url;
+                                        const imageUrl = primaryImage ? getFullImageUrl(primaryImage) : '/images/jersey1.jpg';
+
+                                        return (
+                                            <Link
+                                                key={product.id}
+                                                href={`/shop/${product.id}`}
+                                                className="group bg-[#1E1E1E] rounded-lg overflow-hidden border border-gray-800 hover:border-teal-400 transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/20"
+                                            >
+                                                <div className="relative aspect-square overflow-hidden bg-[#2A2A2A]">
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = '/images/jersey1.jpg';
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="p-3">
+                                                    <h3 className="text-sm font-semibold text-white truncate group-hover:text-teal-400 transition">
+                                                        {product.name}
+                                                    </h3>
+                                                    <p className="text-teal-400 font-bold mt-1">
+                                                        ${Number(product.price).toFixed(2)}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </section>
             </main>
             <Footer />

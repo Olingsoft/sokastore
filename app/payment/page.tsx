@@ -6,6 +6,13 @@ import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import { useCart } from '../context/CartContext';
 
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+}
+
 const ACCENT_COLOR_CLASS = "bg-teal-400 hover:bg-teal-500";
 
 interface OrderFormData {
@@ -31,7 +38,12 @@ export default function PaymentPage() {
     const router = useRouter();
     const { cartItems, isLoading: cartLoading, clearCart } = useCart();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [orderCompleted, setOrderCompleted] = useState(false); // Track if order was successfully placed
     const [error, setError] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 
     const [formData, setFormData] = useState<OrderFormData>({
         customerName: '',
@@ -46,17 +58,60 @@ export default function PaymentPage() {
     });
 
     useEffect(() => {
-        const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
-        if (!isLoggedIn) {
-            router.push('/login');
-            return;
-        }
+        const fetchUserData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    router.push('/login');
+                    return;
+                }
 
-        // Redirect if cart is empty
-        if (!cartLoading && cartItems.length === 0) {
+                // Get user data from localStorage
+                const storedUser = localStorage.getItem('user');
+                if (!storedUser) {
+                    router.push('/login');
+                    return;
+                }
+
+                const userData = JSON.parse(storedUser);
+                const userId = userData.id;
+
+                // Fetch detailed user data from API
+                const response = await fetch(`${BASE_URL}/users/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user data');
+                }
+
+                const data = await response.json();
+                setUser(data);
+
+                // Populate form with user data
+                setFormData(prev => ({
+                    ...prev,
+                    customerName: data.name || '',
+                    customerPhone: data.phone || '',
+                    customerEmail: data.email || ''
+                }));
+            } catch (err) {
+                console.error('Error fetching user data:', err);
+                setError('Failed to load user data');
+            } finally {
+                setIsLoadingUser(false);
+            }
+        };
+
+        fetchUserData();
+
+        // Redirect if cart is empty (but not if order was just completed)
+        if (!cartLoading && cartItems.length === 0 && !orderCompleted) {
             router.push('/cart');
         }
-    }, [router, cartItems, cartLoading]);
+    }, [router, cartItems, cartLoading, orderCompleted, BASE_URL]);
 
     // Calculate totals
     const subtotal = cartItems.reduce((acc, item) => {
@@ -156,6 +211,7 @@ export default function PaymentPage() {
             });
 
             // Clear cart
+            setOrderCompleted(true); // Mark order as completed before clearing cart
             await clearCart();
 
             // Redirect to success page
@@ -179,7 +235,7 @@ export default function PaymentPage() {
         });
     };
 
-    if (cartLoading) {
+    if (cartLoading || isLoadingUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#141313]">
                 <div className="text-white">Loading...</div>
@@ -311,8 +367,8 @@ export default function PaymentPage() {
                                     <button
                                         onClick={() => handlePaymentMethodChange('mpesa')}
                                         className={`p-4 rounded-lg border-2 transition ${formData.paymentMethod === 'mpesa'
-                                                ? 'border-teal-400 bg-teal-400/10'
-                                                : 'border-gray-700 hover:border-gray-600'
+                                            ? 'border-teal-400 bg-teal-400/10'
+                                            : 'border-gray-700 hover:border-gray-600'
                                             }`}
                                     >
                                         <div className="text-center">
@@ -323,8 +379,8 @@ export default function PaymentPage() {
                                     <button
                                         onClick={() => handlePaymentMethodChange('card')}
                                         className={`p-4 rounded-lg border-2 transition ${formData.paymentMethod === 'card'
-                                                ? 'border-teal-400 bg-teal-400/10'
-                                                : 'border-gray-700 hover:border-gray-600'
+                                            ? 'border-teal-400 bg-teal-400/10'
+                                            : 'border-gray-700 hover:border-gray-600'
                                             }`}
                                     >
                                         <div className="text-center">
@@ -335,8 +391,8 @@ export default function PaymentPage() {
                                     <button
                                         onClick={() => handlePaymentMethodChange('cash')}
                                         className={`p-4 rounded-lg border-2 transition ${formData.paymentMethod === 'cash'
-                                                ? 'border-teal-400 bg-teal-400/10'
-                                                : 'border-gray-700 hover:border-gray-600'
+                                            ? 'border-teal-400 bg-teal-400/10'
+                                            : 'border-gray-700 hover:border-gray-600'
                                             }`}
                                     >
                                         <div className="text-center">

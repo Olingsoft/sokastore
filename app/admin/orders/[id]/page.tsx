@@ -1,9 +1,19 @@
 'use client';
 import Sidebar from "../../components/sideBar";
 import Header from "../../components/header";
-import { Zap, CheckCircle, XCircle, ArrowLeft, Save } from "lucide-react";
+import { Zap, CheckCircle, XCircle, ArrowLeft, Save, RefreshCw } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+
+// Helper function to construct full image URLs
+const getFullImageUrl = (imagePath: string | null): string => {
+  if (!imagePath) return '/images/jersey1.jpg';
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+  const normalizedPath = imagePath.replace(/^\/|\/public\//, '');
+  return `${baseUrl}/${normalizedPath}`;
+};
 
 // --- INTERFACES ---
 interface Customization {
@@ -20,99 +30,32 @@ interface OrderItem {
 }
 
 interface Order {
+  internalId: number; // Added for API operations
   id: string;
   customer: string;
+  email?: string;
+  phone?: string;
   date: string;
   total: string;
-  status: 'Completed' | 'Pending' | 'Shipped' | 'Cancelled';
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   items: OrderItem[];
   pickupAddress?: string;
+  deliveryType?: string;
+  deliveryZone?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  transactionId?: string;
 }
 
 // --- Status Styling Map ---
 const statusStyles: Record<Order['status'], string> = {
-  'Completed': 'bg-green-600/30 text-green-400',
-  'Pending': 'bg-yellow-600/30 text-yellow-400',
-  'Shipped': 'bg-blue-600/30 text-blue-400',
-  'Cancelled': 'bg-red-600/30 text-red-400',
+  'pending': 'bg-yellow-600/30 text-yellow-400',
+  'confirmed': 'bg-blue-600/30 text-blue-400',
+  'processing': 'bg-purple-600/30 text-purple-400',
+  'shipped': 'bg-cyan-600/30 text-cyan-400',
+  'delivered': 'bg-green-600/30 text-green-400',
+  'cancelled': 'bg-red-600/30 text-red-400',
 };
-
-// Mock orders data - in production, this would come from an API
-const mockOrders: Order[] = [
-  {
-    id: "#ORD-101",
-    customer: "John Doe",
-    date: "2025-11-05",
-    total: "$150",
-    status: "Completed",
-    items: [
-      { 
-        name: "Red Hoodie", 
-        price: 50, 
-        qty: 1, 
-        img: "/products/hoodie.jpg",
-        customization: { name: "JDoe", number: "10" }
-      },
-      { 
-        name: "Black Sneakers", 
-        price: 100, 
-        qty: 1, 
-        img: "/products/sneakers.jpg" 
-      },
-    ],
-    pickupAddress: "123 Main St, New York, NY 10001",
-  },
-  {
-    id: "#ORD-102",
-    customer: "Jane Smith",
-    date: "2025-11-06",
-    total: "$89",
-    status: "Pending",
-    items: [
-      { 
-        name: "Blue Dress", 
-        price: 89, 
-        qty: 1, 
-        img: "/products/dress.jpg",
-        customization: { name: "Jane" }
-      },
-    ],
-    pickupAddress: "456 Oak Ave, Los Angeles, CA 90001",
-  },
-  {
-    id: "#ORD-103",
-    customer: "Alice Johnson",
-    date: "2025-11-07",
-    total: "$220",
-    status: "Shipped",
-    items: [
-      { 
-        name: "Team Jersey", 
-        price: 110, 
-        qty: 2, 
-        img: "/products/jersey.jpg",
-        customization: { name: "Alice", number: "7" }
-      },
-    ],
-    pickupAddress: "789 Pine Ln, Chicago, IL 60601",
-  },
-  {
-    id: "#ORD-104",
-    customer: "Bob Brown",
-    date: "2025-11-08",
-    total: "$35",
-    status: "Cancelled",
-    items: [
-      { 
-        name: "Plain T-Shirt", 
-        price: 35, 
-        qty: 1, 
-        img: "/products/tshirt.jpg",
-      },
-    ],
-    pickupAddress: "999 Elm Rd, Houston, TX 77001",
-  },
-];
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -121,42 +64,144 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<Order['status'] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Find order by ID - remove # from orderId if present
-    const cleanId = orderId.startsWith('#') ? orderId : `#${orderId}`;
-    const foundOrder = mockOrders.find(o => o.id === cleanId || o.id === orderId);
-    
-    if (foundOrder) {
-      setOrder(foundOrder);
-      setSelectedStatus(foundOrder.status);
-    }
-  }, [orderId]);
+    const fetchOrder = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/admin/login');
+          return;
+        }
+
+        // Try to find order by orderNumber
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/all`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+
+        const data = await response.json();
+        const foundOrder = data.orders?.find((o: any) => o.orderNumber === orderId);
+
+        if (foundOrder) {
+          const mappedOrder: Order = {
+            internalId: foundOrder.id, // Database ID
+            id: foundOrder.orderNumber,
+            customer: foundOrder.customerName,
+            email: foundOrder.customerEmail,
+            phone: foundOrder.customerPhone,
+            date: new Date(foundOrder.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }),
+            total: `$${Number(foundOrder.totalAmount).toFixed(2)}`,
+            status: foundOrder.orderStatus,
+            deliveryType: foundOrder.deliveryType,
+            deliveryZone: foundOrder.deliveryZone,
+            pickupAddress: foundOrder.deliveryType === 'delivery'
+              ? foundOrder.deliveryAddress
+              : 'Pickup',
+            paymentMethod: foundOrder.paymentMethod,
+            paymentStatus: foundOrder.paymentStatus,
+            transactionId: foundOrder.transactionId,
+            items: (foundOrder.items || []).map((item: any) => {
+              const itemCustomization: Customization = {};
+              if (item.customization) {
+                try {
+                  const parsed = typeof item.customization === 'string'
+                    ? JSON.parse(item.customization)
+                    : item.customization;
+
+                  // Handle both formats (playerName/playerNumber vs name/number)
+                  if (parsed.playerName) itemCustomization.name = parsed.playerName;
+                  if (parsed.playerNumber) itemCustomization.number = parsed.playerNumber;
+                  if (parsed.name) itemCustomization.name = parsed.name;
+                  if (parsed.number) itemCustomization.number = parsed.number;
+                } catch (e) {
+                  console.error('Error parsing customization:', e);
+                }
+              }
+
+              return {
+                name: item.productName,
+                price: Number(item.price),
+                qty: item.quantity,
+                img: getFullImageUrl(item.productImage),
+                customization: Object.keys(itemCustomization).length > 0 ? itemCustomization : undefined
+              };
+            })
+          };
+
+          setOrder(mappedOrder);
+          setSelectedStatus(mappedOrder.status);
+        } else {
+          setError('Order not found');
+        }
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching order:', err);
+        setError('Failed to load order');
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId, router]);
 
   const handleStatusChange = (newStatus: Order['status']) => {
     setSelectedStatus(newStatus);
   };
 
-  const handleSaveStatus = () => {
+  const handleSaveStatus = async () => {
     if (!order || !selectedStatus) return;
-    
+
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setOrder({ ...order, status: selectedStatus });
+    try {
+      const token = localStorage.getItem('token');
+
+      // Update order status via API using internalId
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${order.internalId}/payment-status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentStatus: selectedStatus === 'delivered' ? 'paid' : 'pending',
+          orderStatus: selectedStatus
+        })
+      });
+
+      if (response.ok) {
+        setOrder({ ...order, status: selectedStatus });
+        alert('Order status updated successfully!');
+      } else {
+        throw new Error('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update order status');
+    } finally {
       setIsSaving(false);
-      // In production, you would make an API call here to update the status
-      // await updateOrderStatus(order.id, selectedStatus);
-    }, 500);
+    }
   };
 
   // --- Utility Component for Status Badge ---
   const StatusBadge = ({ status }: { status: Order['status'] }) => {
     return (
-      <span 
+      <span
         className={`text-xs font-semibold px-3 py-1 rounded-full ${statusStyles[status]}`}
       >
-        {status}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
@@ -180,7 +225,26 @@ export default function OrderDetailPage() {
     );
   };
 
-  if (!order) {
+  if (isLoading) {
+    return (
+      <div className="flex w-full">
+        <Sidebar />
+        <main className="ml-64 flex-1 min-h-screen bg-[#141313] text-white">
+          <Header />
+          <section className="p-8">
+            <div className="flex justify-center items-center h-64">
+              <div className="flex flex-col items-center space-y-4">
+                <RefreshCw className="w-12 h-12 text-teal-400 animate-spin" />
+                <p className="text-gray-400">Loading order...</p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (!order || error) {
     return (
       <div className="flex w-full ">
         <Sidebar />
@@ -189,7 +253,7 @@ export default function OrderDetailPage() {
           <section className="p-8 w-full">
             <div className="text-center py-12">
               <h2 className="text-2xl font-bold mb-4">Order Not Found</h2>
-              <p className="text-gray-400 mb-6">The order you're looking for doesn't exist.</p>
+              <p className="text-gray-400 mb-6">{error || "The order you're looking for doesn't exist."}</p>
               <button
                 onClick={() => router.push('/admin/orders')}
                 className="bg-teal-500 hover:bg-teal-600 text-black px-6 py-3 rounded-lg font-bold"
@@ -230,6 +294,8 @@ export default function OrderDetailPage() {
               <div className="text-sm">
                 <p className="text-gray-400 font-medium">Customer</p>
                 <p className="text-lg font-semibold">{order.customer}</p>
+                {order.email && <p className="text-sm text-gray-400">{order.email}</p>}
+                {order.phone && <p className="text-sm text-gray-400">{order.phone}</p>}
               </div>
               <div className="text-sm">
                 <p className="text-gray-400 font-medium">Order Date</p>
@@ -241,16 +307,44 @@ export default function OrderDetailPage() {
               </div>
               <div className="text-sm">
                 <p className="text-gray-400 font-medium mb-2">Status</p>
-                
+                <StatusBadge status={order.status} />
+              </div>
+              <div className="text-sm">
+                <p className="text-gray-400 font-medium">Payment Method</p>
+                <p className="text-lg font-semibold capitalize">{order.paymentMethod || 'N/A'}</p>
+              </div>
+              <div className="text-sm">
+                <p className="text-gray-400 font-medium">Payment Status</p>
+                <p className="text-lg font-semibold capitalize">{order.paymentStatus || 'N/A'}</p>
               </div>
             </div>
-            
-            {/* Pickup Address/Shipping */}
+
+            {/* Delivery Details */}
             <div className="mb-6">
-              <h3 className="text-xl font-semibold mb-2 text-gray-300">Location Details</h3>
+              <h3 className="text-xl font-semibold mb-2 text-gray-300">Delivery Details</h3>
               <div className="bg-[#2A2A2A] p-4 rounded-lg">
-                <p className="text-gray-400 text-sm">Pickup/Shipping Address</p>
-                <p className="font-medium">{order.pickupAddress || "N/A (Digital or Unknown)"}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-400 text-sm">Delivery Type</p>
+                    <p className="font-medium capitalize">{order.deliveryType || 'N/A'}</p>
+                  </div>
+                  {order.deliveryZone && (
+                    <div>
+                      <p className="text-gray-400 text-sm">Delivery Zone</p>
+                      <p className="font-medium">{order.deliveryZone}</p>
+                    </div>
+                  )}
+                  <div className="col-span-2">
+                    <p className="text-gray-400 text-sm">Address</p>
+                    <p className="font-medium">{order.pickupAddress || "N/A"}</p>
+                  </div>
+                  {order.transactionId && (
+                    <div className="col-span-2">
+                      <p className="text-gray-400 text-sm">Transaction ID</p>
+                      <p className="font-medium font-mono text-teal-400">{order.transactionId}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -260,7 +354,15 @@ export default function OrderDetailPage() {
             <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
               {order.items.map((item, idx) => (
                 <div key={idx} className="flex gap-4 bg-[#2A2A2A] p-4 rounded-lg border border-gray-700">
-                  <img src={item.img} alt={item.name} className="w-20 h-20 rounded-lg object-cover border border-gray-600" />
+                  <img
+                    src={item.img}
+                    alt={item.name}
+                    className="w-20 h-20 rounded-lg object-cover border border-gray-600"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/images/jersey1.jpg';
+                    }}
+                  />
 
                   <div className="flex-1">
                     <p className="font-bold text-lg text-white">{item.name}</p>
@@ -283,9 +385,6 @@ export default function OrderDetailPage() {
                         )}
                         {item.customization.number && (
                           <p className="text-gray-300">Number: <span className="font-medium text-white">{item.customization.number}</span></p>
-                        )}
-                        {!item.customization.name && !item.customization.number && (
-                          <p className="text-gray-500 italic">No specific details provided.</p>
                         )}
                       </div>
                     )}
@@ -316,38 +415,13 @@ export default function OrderDetailPage() {
                       value={selectedStatus || order.status}
                       onChange={(e) => handleStatusChange(e.target.value as Order['status'])}
                       className="w-full bg-[#141313] border-2 border-gray-600 text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none cursor-pointer font-medium transition-all hover:border-gray-500"
-                      style={{
-                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                        backgroundPosition: 'right 0.5rem center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundSize: '1.5em 1.5em',
-                        paddingRight: '2.5rem',
-                      }}
                     >
-                      <option 
-                        value="Pending" 
-                        className="bg-[#141313] text-yellow-400 py-2"
-                      >
-                        ⏳ Pending
-                      </option>
-                      <option 
-                        value="Shipped" 
-                        className="bg-[#141313] text-blue-400 py-2"
-                      >
-                        🚚 Shipped
-                      </option>
-                      <option 
-                        value="Completed" 
-                        className="bg-[#141313] text-green-400 py-2"
-                      >
-                        ✅ Completed
-                      </option>
-                      <option 
-                        value="Cancelled" 
-                        className="bg-[#141313] text-red-400 py-2"
-                      >
-                        ❌ Cancelled
-                      </option>
+                      <option value="pending">⏳ Pending</option>
+                      <option value="confirmed">✓ Confirmed</option>
+                      <option value="processing">⚙️ Processing</option>
+                      <option value="shipped">🚚 Shipped</option>
+                      <option value="delivered">✅ Delivered</option>
+                      <option value="cancelled">❌ Cancelled</option>
                     </select>
                   </div>
 

@@ -10,6 +10,7 @@ export interface CartItem {
         id: number;
         name: string;
         price: number;
+        categoryId?: number;
         images?: { url: string; isPrimary: boolean }[];
     };
     quantity: number;
@@ -115,7 +116,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 quantity,
                 size: options.size,
                 type: options.type,
-                customization: options.customization
+                customization: options.customization,
+                customizationFee: options.customizationFee
             };
 
             const res = await fetch(`${apiUrl}/cart/add`, {
