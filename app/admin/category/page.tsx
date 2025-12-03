@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,13 +17,26 @@ interface Category {
   updatedAt?: string;
 }
 
+interface Badge {
+  id: string | number;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export default function CategoriesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBadges, setIsLoadingBadges] = useState(true);
   const [isEditing, setIsEditing] = useState<string | number | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | number | null>(null);
+  const [badgeToDelete, setBadgeToDelete] = useState<string | number | null>(null);
   const [editCategory, setEditCategory] = useState({
     name: '',
     slug: '',
@@ -51,8 +66,24 @@ export default function CategoriesPage() {
     }
   };
 
+  // Fetch badges
+  const fetchBadges = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/badges`);
+      if (!response.ok) throw new Error('Failed to fetch badges');
+      const data = await response.json();
+      setBadges(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching badges:', error);
+      toast.error('Failed to load badges');
+    } finally {
+      setIsLoadingBadges(false);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
+    fetchBadges();
   }, []);
 
   // Show success toast after creation and clean URL
@@ -60,6 +91,9 @@ export default function CategoriesPage() {
     const created = searchParams?.get('created');
     if (created === '1') {
       toast.success('Category created');
+      router.replace('/admin/category');
+    } else if (created === 'badge') {
+      toast.success('Badge created');
       router.replace('/admin/category');
     }
   }, [searchParams, router]);
@@ -102,7 +136,7 @@ export default function CategoriesPage() {
       });
 
       if (!response.ok) throw new Error('Failed to update category');
-      
+
       toast.success('Category updated successfully');
       setIsEditing(null);
       fetchCategories();
@@ -115,7 +149,7 @@ export default function CategoriesPage() {
   // Delete category
   const confirmDelete = async () => {
     if (!categoryToDelete) return;
-    
+
     try {
       const response = await fetch(`${apiUrl}/categories/${categoryToDelete}`, {
         method: 'DELETE',
@@ -125,13 +159,36 @@ export default function CategoriesPage() {
       });
 
       if (!response.ok) throw new Error('Failed to delete category');
-      
+
       toast.success('Category deleted successfully');
       setCategoryToDelete(null);
       fetchCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
       toast.error('Failed to delete category');
+    }
+  };
+
+  // Delete badge
+  const confirmDeleteBadge = async () => {
+    if (!badgeToDelete) return;
+
+    try {
+      const response = await fetch(`${apiUrl}/badges/${badgeToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to delete badge');
+
+      toast.success('Badge deleted successfully');
+      setBadgeToDelete(null);
+      fetchBadges();
+    } catch (error) {
+      console.error('Error deleting badge:', error);
+      toast.error('Failed to delete badge');
     }
   };
 
@@ -290,6 +347,107 @@ export default function CategoriesPage() {
               </table>
             </div>
           </div>
+
+          {/* Badges Section */}
+          <div className="mt-12">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                  <Tag className="text-purple-400" size={24} />
+                  Badges
+                </h2>
+                <p className="text-gray-400">Manage product badges</p>
+              </div>
+              <button
+                onClick={() => router.push('/admin/category/add-badges')}
+                className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <Plus size={18} />
+                Add Badge
+              </button>
+            </div>
+
+            {/* Badges Table */}
+            <div className="bg-[#1E1E1E] rounded-xl border border-gray-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                  <thead className="bg-[#2A2A2A]">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Slug
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Icon
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-[#1E1E1E] divide-y divide-gray-800">
+                    {isLoadingBadges ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
+                          Loading badges...
+                        </td>
+                      </tr>
+                    ) : badges.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                          <Tag className="mx-auto mb-2 text-gray-600" size={32} />
+                          <p>No badges found</p>
+                          <button
+                            onClick={() => router.push('/admin/category/add-badges')}
+                            className="mt-2 text-purple-400 hover:text-purple-300 font-medium"
+                          >
+                            Add your first badge
+                          </button>
+                        </td>
+                      </tr>
+                    ) : (
+                      badges.map((badge) => (
+                        <tr key={badge.id} className="hover:bg-[#2A2A2A]/50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-white">{badge.name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-400">{badge.slug}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {badge.icon ? (
+                              <img src={badge.icon} alt={badge.name} className="w-8 h-8 object-contain bg-gray-700 rounded p-1" />
+                            ) : (
+                              <span className="text-xs text-gray-500">No icon</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {formatDate(badge.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                onClick={() => setBadgeToDelete(badge.id)}
+                                className="text-red-400 hover:text-red-300 p-1.5 rounded-full hover:bg-gray-700"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -318,6 +476,40 @@ export default function CategoriesPage() {
               </button>
               <button
                 onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Badge Confirmation Modal */}
+      {badgeToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E1E1E] rounded-xl p-6 max-w-md w-full border border-red-500/30">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Delete Badge</h3>
+              <button
+                onClick={() => setBadgeToDelete(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete this badge? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setBadgeToDelete(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteBadge}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg"
               >
                 Delete

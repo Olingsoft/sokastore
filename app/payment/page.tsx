@@ -116,7 +116,8 @@ export default function PaymentPage() {
     // Calculate totals
     const subtotal = cartItems.reduce((acc, item) => {
         const price = Number(item.price) || 0;
-        return acc + (price * item.quantity);
+        const customizationFee = Number(item.customizationFee) || 0;
+        return acc + ((price + customizationFee) * item.quantity);
     }, 0);
 
     const selectedZone = deliveryZones.find(z => z.name === formData.deliveryZone);
@@ -188,7 +189,8 @@ export default function PaymentPage() {
                 },
                 body: JSON.stringify({
                     ...formData,
-                    deliveryFee
+                    deliveryFee,
+                    items: cartItems // Include items with customization for backend
                 })
             });
 
@@ -235,9 +237,19 @@ export default function PaymentPage() {
         console.log('Starting WhatsApp checkout...');
 
         // Format order items
-        const itemsList = cartItems.map((item, index) =>
-            `${index + 1}. ${item.product?.name || 'Product'} - Qty: ${item.quantity} × $${Number(item.price).toFixed(2)} = $${(Number(item.price) * item.quantity).toFixed(2)}`
-        ).join('\n');
+        const itemsList = cartItems.map((item, index) => {
+            const price = Number(item.price) || 0;
+            const customizationFee = Number(item.customizationFee) || 0;
+            const itemTotal = (price + customizationFee) * item.quantity;
+
+            let details = `${index + 1}. ${item.product?.name || 'Product'} - Qty: ${item.quantity} × $${(price + customizationFee).toFixed(2)} = $${itemTotal.toFixed(2)}`;
+
+            if (item.customization) {
+                details += `\n   Customization: ${item.customization.playerName || ''} ${item.customization.playerNumber || ''} ${item.customization.selectedBadge ? `(${item.customization.selectedBadge})` : ''}`;
+            }
+
+            return details;
+        }).join('\n');
 
         // Build WhatsApp message
         const message = `*🛍️ NEW ORDER REQUEST*\n\n` +
@@ -510,11 +522,16 @@ export default function PaymentPage() {
                                                     {item.product?.name || 'Product'}
                                                 </div>
                                                 <div className="text-gray-400 text-xs">
-                                                    Qty: {item.quantity} × ${Number(item.price).toFixed(2)}
+                                                    Qty: {item.quantity} × ${(Number(item.price) + (Number(item.customizationFee) || 0)).toFixed(2)}
                                                 </div>
+                                                {item.customization && (
+                                                    <div className="text-xs text-teal-400 mt-1">
+                                                        + Customization
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="text-teal-400 font-semibold">
-                                                ${(Number(item.price) * item.quantity).toFixed(2)}
+                                                ${((Number(item.price) + (Number(item.customizationFee) || 0)) * item.quantity).toFixed(2)}
                                             </div>
                                         </div>
                                     ))}

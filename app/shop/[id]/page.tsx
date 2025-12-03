@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Disclosure } from '@headlessui/react';
-import { ChevronDownIcon, ArrowLeftIcon, ShoppingBagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ArrowLeftIcon, ShoppingBagIcon, CheckCircleIcon, TagIcon as Tag } from '@heroicons/react/24/outline';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Link from 'next/link';
@@ -27,6 +27,14 @@ interface Product {
   gallery?: string[];
   availableBadges?: string[];
   pricePerCustomization?: number;
+}
+
+interface Badge {
+  id: string | number;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
 }
 
 interface CustomizationOptions {
@@ -114,6 +122,7 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('S');
@@ -224,6 +233,21 @@ export default function ProductDetailPage() {
     fetchRelated();
   }, [id, apiUrl]);
 
+  // Fetch badges
+  useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/badges`);
+        if (!res.ok) throw new Error('Failed to fetch badges');
+        const data = await res.json();
+        setBadges(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching badges:', err);
+      }
+    };
+    fetchBadges();
+  }, [apiUrl]);
+
   // Keep derived UI values in sync when product state changes
   useEffect(() => {
     if (!product) return;
@@ -253,7 +277,7 @@ export default function ProductDetailPage() {
   }
 
   const isCustomized = !!(customization.playerName || customization.playerNumber || customization.selectedBadge);
-  const customizationFee = isCustomized ? (product.pricePerCustomization || 0) : 0;
+  const customizationFee = isCustomized ? 400 : 0;
   const totalPrice = (product.price + customizationFee) * quantity;
 
   const inputClass = "w-full bg-[#2A2A2A] border border-gray-700 text-white rounded-md py-2 px-3 text-sm focus:ring-teal-400 focus:border-teal-400 focus:outline-none transition-all";
@@ -353,10 +377,28 @@ export default function ProductDetailPage() {
                     </div>
                     <div>
                       <label className={labelClass}>Select Badge</label>
-                      <select value={customization.selectedBadge} onChange={(e) => setCustomization({ ...customization, selectedBadge: e.target.value })} className={inputClass}>
-                        <option value="">No badge</option>
-                        {product.availableBadges?.map((badge, idx) => (<option key={idx} value={badge}>{badge}</option>))}
-                      </select>
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        <div
+                          onClick={() => setCustomization({ ...customization, selectedBadge: '' })}
+                          className={`cursor-pointer rounded-lg border p-2 flex flex-col items-center justify-center transition-all ${!customization.selectedBadge ? 'border-teal-400 bg-teal-400/10' : 'border-gray-700 bg-[#2A2A2A] hover:border-gray-500'}`}
+                        >
+                          <span className="text-xs text-center font-medium text-gray-300">None</span>
+                        </div>
+                        {badges.map((badge) => (
+                          <div
+                            key={badge.id}
+                            onClick={() => setCustomization({ ...customization, selectedBadge: badge.name })}
+                            className={`cursor-pointer rounded-lg border p-2 flex flex-col items-center justify-center gap-2 transition-all ${customization.selectedBadge === badge.name ? 'border-teal-400 bg-teal-400/10' : 'border-gray-700 bg-[#2A2A2A] hover:border-gray-500'}`}
+                          >
+                            {badge.icon ? (
+                              <img src={badge.icon} alt={badge.name} className="w-8 h-8 object-contain" />
+                            ) : (
+                              <Tag className="w-6 h-6 text-gray-500" />
+                            )}
+                            <span className="text-[10px] text-center font-medium text-gray-300 line-clamp-1">{badge.name}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </Disclosure.Panel>
                 </>

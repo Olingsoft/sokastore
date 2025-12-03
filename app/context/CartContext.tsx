@@ -22,6 +22,7 @@ export interface CartItem {
         playerNumber?: string;
         selectedBadge?: string;
     };
+    customizationFee?: number;
 }
 
 interface CartContextType {
