@@ -136,15 +136,20 @@ export default function LandingPage() {
   }, [apiUrl]);
 
   const newArrivals = products.slice(0, 4);
-  const getProductsByCategory = (category: string) => {
-    return products.filter(p => p.category.toLowerCase().includes(category.toLowerCase()));
-  };
+  // Group products by category
+  const categoriesMap = products.reduce((acc, product) => {
+    const cat = product.category || "Uncategorized";
+    if (!acc[cat]) {
+      acc[cat] = [];
+    }
+    acc[cat].push(product);
+    return acc;
+  }, {} as Record<string, ShopProduct[]>);
 
-  const leagues = [
-    { name: "Premier League", products: getProductsByCategory("Premier League") },
-    { name: "La Liga", products: getProductsByCategory("La Liga") },
-    { name: "Serie A", products: getProductsByCategory("Serie A") }
-  ];
+  const categories = Object.entries(categoriesMap).map(([name, products]) => ({
+    name,
+    products
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans relative">
@@ -185,17 +190,17 @@ export default function LandingPage() {
         {/* Categorized Jersey Rows */}
         <section className="py-12 bg-gray-50 px-4 sm:px-6 md:px-12">
           <div className="max-w-7xl mx-auto space-y-12">
-            {leagues.map((league, idx) => (
-              league.products.length > 0 && (
+            {categories.map((category, idx) => (
+              category.products.length > 0 && (
                 <div key={idx}>
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">{league.name}</h2>
-                    <Link href={`/shop?league=${league.name.toLowerCase().replace(' ', '-')}`} className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center">
+                    <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
+                    <Link href={`/shop?category=${category.name.toLowerCase().replace(/\s+/g, '-')}`} className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center">
                       View All <ArrowRight className="ml-1" size={16} />
                     </Link>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {league.products.slice(0, 4).map((product) => (
+                    {category.products.slice(0, 8).map((product) => (
                       <ProductCard key={product.id} product={product} />
                     ))}
                   </div>
@@ -203,7 +208,7 @@ export default function LandingPage() {
               )
             ))}
 
-            {!isLoading && leagues.every(l => l.products.length === 0) && (
+            {!isLoading && categories.every(c => c.products.length === 0) && (
               <div className="text-center text-gray-500">No categorized products found.</div>
             )}
           </div>

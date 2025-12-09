@@ -5,6 +5,8 @@ import Header from '../components/Header';
 import { ArrowRight, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import Footer from '../components/Footer';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 interface ShopProduct {
   id: number;
@@ -124,13 +126,16 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardPro
   );
 };
 
-export default function ShopPage() {
+const ShopContent = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get('category');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -180,6 +185,12 @@ export default function ShopPage() {
     );
   };
 
+  const filteredProducts = products.filter(product => {
+    if (!categoryParam) return true;
+    const productCat = (product.category || '').toLowerCase().replace(/\s+/g, '-');
+    return productCat === categoryParam;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       <Header />
@@ -216,12 +227,12 @@ export default function ShopPage() {
                 <div className="col-span-full text-center py-8 text-red-500 text-sm">
                   {error}
                 </div>
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <div className="col-span-full text-center py-8 text-gray-500 text-sm">
                   No products available.
                 </div>
               ) : (
-                products.map((product) => (
+                filteredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
@@ -237,5 +248,13 @@ export default function ShopPage() {
 
       <Footer />
     </div>
+  );
+};
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ShopContent />
+    </Suspense>
   );
 }
