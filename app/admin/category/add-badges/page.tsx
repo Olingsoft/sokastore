@@ -36,16 +36,32 @@ export default function AddBadgePage() {
         }
 
         try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+            console.log('Token being sent:', token ? 'Token exists' : 'No token found');
+            console.log('API URL:', `${apiUrl}/badges`);
+
             const response = await fetch(`${apiUrl}/badges`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(newBadge)
             });
 
-            if (!response.ok) throw new Error('Failed to add badge');
+            const data = await response.json();
+            console.log('Response status:', response.status);
+            console.log('Response data:', data);
+
+            if (!response.ok) {
+                // Show specific validation errors if available
+                if (data.errors && Array.isArray(data.errors)) {
+                    data.errors.forEach((error: string) => toast.error(error));
+                } else {
+                    toast.error(data.message || 'Failed to add badge');
+                }
+                return;
+            }
 
             toast.success('Badge added successfully');
             router.push('/admin/category?created=badge');
