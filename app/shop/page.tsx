@@ -42,11 +42,30 @@ const getPrimaryImage = (images: ProductImage[] = []): string => {
 // ------------------ FIX #2: IMPROVED URL NORMALIZATION ------------------
 const getFullImageUrl = (imagePath: string): string => {
   if (!imagePath) return '';
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
 
-  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
-  let normalizedPath = imagePath.replace(/^\/|\/public\//, '');
-  return `${baseUrl}/${normalizedPath}`;
+  // If already a full URL, return as-is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+
+  // Get base URL and remove /api suffix if present
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+
+  // Normalize the path: remove leading slash and /public/ prefix
+  let normalizedPath = imagePath.trim();
+  normalizedPath = normalizedPath.replace(/^\/+/, ''); // Remove leading slashes
+  normalizedPath = normalizedPath.replace(/^public\//, ''); // Remove /public/ prefix
+
+  // Construct full URL
+  const fullUrl = `${baseUrl}/${normalizedPath}`;
+
+  // Debug logging (can be removed in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Image URL construction:', { imagePath, baseUrl, normalizedPath, fullUrl });
+  }
+
+  return fullUrl;
 };
 
 interface ProductCardProps {
