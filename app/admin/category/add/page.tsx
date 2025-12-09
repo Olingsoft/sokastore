@@ -35,16 +35,32 @@ export default function AddCategoryPage() {
     }
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+      console.log('Token being sent:', token ? 'Token exists' : 'No token found');
+      console.log('API URL:', `${apiUrl}/categories`);
+
       const response = await fetch(`${apiUrl}/categories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(newCategory)
+        body: JSON.stringify({ name: newCategory.name })
       });
 
-      if (!response.ok) throw new Error('Failed to add category');
+      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response data:', data);
+
+      if (!response.ok) {
+        // Show specific validation errors if available
+        if (data.errors && Array.isArray(data.errors)) {
+          data.errors.forEach((error: string) => toast.error(error));
+        } else {
+          toast.error(data.message || 'Failed to add category');
+        }
+        return;
+      }
 
       toast.success('Category added successfully');
       router.push('/admin/category?created=1');
