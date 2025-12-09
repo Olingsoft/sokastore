@@ -1,10 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
-import { useState } from 'react';
-import { UserCircleIcon, ShoppingBagIcon, HeartIcon, MapPinIcon, LockClosedIcon, ArrowLeftOnRectangleIcon, ForwardRefExoticComponent, SVGProps } from '@heroicons/react/24/outline'; // Imported ForwardRefExoticComponent and SVGProps for better icon typing
+import { UserCircleIcon, ShoppingBagIcon, HeartIcon, MapPinIcon, LockClosedIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 
 // --- 1. Define Section Key Type ---
 type SectionKey = 'Dashboard' | 'Orders' | 'Wishlist' | 'Addresses' | 'Security' | 'SignOut';
@@ -12,8 +11,8 @@ type SectionKey = 'Dashboard' | 'Orders' | 'Wishlist' | 'Addresses' | 'Security'
 // --- 2. Define the Type for Navigation Items ---
 interface AccountSection {
     name: string;
-    // Explicitly type the icon component from Heroicons
-    icon: ForwardRefExoticComponent<Omit<SVGProps<SVGSVGElement>, "ref"> & { title?: string | undefined; }, SVGSVGElement>;
+    // Simplified icon type using React.ComponentType
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     component: SectionKey; // Use the strict literal type here
 }
 
@@ -75,7 +74,7 @@ const SecurityContent = () => (
     </div>
 );
 
-const ContentMap: Record<SectionKey, () => JSX.Element> = {
+const ContentMap: Record<SectionKey, () => React.JSX.Element> = {
     Dashboard: DashboardContent,
     Orders: OrdersContent,
     Wishlist: () => <h3 className="text-xl font-semibold text-white">Your Wishlist (3 Items)</h3>,
@@ -96,9 +95,9 @@ export default function AccountPage() {
                 <section className="bg-[#141313] text-white py-10 px-4 sm:px-6 md:px-8">
                     <div className="max-w-7xl mx-auto">
                         <h1 className="text-3xl font-bold mb-6 border-b border-gray-800 pb-3">My Account</h1>
-                        
+
                         <div className="flex flex-col lg:flex-row gap-8">
-                            
+
                             {/* 1. Sidebar Navigation (Compact and Sticky) */}
                             <nav className="lg:w-60 flex-shrink-0">
                                 {/* Navigation for small screens (scrollable pills) */}
@@ -110,8 +109,8 @@ export default function AccountPage() {
                                             onClick={() => setActiveSection(item.component)} // item.component is already SectionKey
                                             className={`
                                                 flex items-center text-sm font-medium py-2 px-4 rounded-full whitespace-nowrap transition-colors duration-200
-                                                ${activeSection === item.component 
-                                                    ? 'bg-teal-400 text-[#141313] font-bold shadow-md' 
+                                                ${activeSection === item.component
+                                                    ? 'bg-teal-400 text-[#141313] font-bold shadow-md'
                                                     : 'bg-[#1E1E1E] text-gray-300 hover:bg-gray-700'
                                                 }
                                             `}
@@ -131,8 +130,8 @@ export default function AccountPage() {
                                             onClick={() => setActiveSection(item.component)} // item.component is already SectionKey
                                             className={`
                                                 w-full flex items-center text-left text-sm py-2 px-3 rounded-lg transition-colors duration-200
-                                                ${activeSection === item.component 
-                                                    ? 'bg-teal-400 text-[#141313] font-bold' 
+                                                ${activeSection === item.component
+                                                    ? 'bg-teal-400 text-[#141313] font-bold'
                                                     : 'text-gray-300 hover:bg-[#2A2A2A]'
                                                 }
                                                 ${item.component === 'SignOut' ? 'text-red-400 hover:bg-red-900/20' : ''}
@@ -144,7 +143,7 @@ export default function AccountPage() {
                                     ))}
                                 </div>
                             </nav>
-                            
+
                             {/* 2. Main Content Area */}
                             <div className="flex-1 bg-[#1E1E1E] rounded-xl shadow-lg p-6 lg:p-8 border border-gray-800">
                                 {ActiveComponent && <ActiveComponent />}

@@ -19,7 +19,7 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { cartCount, refreshCart } = useCart();
+  const { cartCount, fetchCart } = useCart();
 
   useEffect(() => {
     // Check if user is logged in
@@ -27,7 +27,7 @@ export default function Header() {
     if (userData) {
       try {
         setUser(JSON.parse(userData));
-        refreshCart();
+        fetchCart();
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
@@ -41,7 +41,7 @@ export default function Header() {
     }
     setUser(null);
     setOpen(false);
-    refreshCart();
+    fetchCart();
     router.push('/');
   };
 
