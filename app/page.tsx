@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/HeroSection';
-import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import Footer from './components/Footer';
 import Link from 'next/link';
@@ -44,9 +43,17 @@ const getFullImageUrl = (imagePath: string): string => {
   if (!imagePath) return '';
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
 
+  // Remove /api from the end if present
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
-  let normalizedPath = imagePath.replace(/^\/|\/public\//, '');
-  return `${baseUrl}/${normalizedPath}`;
+
+  // Clean up the path - remove leading slashes and /public/
+  let normalizedPath = imagePath.replace(/^\/+/, '').replace(/^\/public\//, '');
+
+  // Ensure no double slashes
+  const fullUrl = `${baseUrl}/${normalizedPath}`.replace(/([^:])\/{2,}/g, '$1/');
+
+  console.log('Image URL constructed:', { imagePath, baseUrl, normalizedPath, fullUrl });
+  return fullUrl;
 };
 
 // --- PRODUCT CARD COMPONENT ---
@@ -58,13 +65,22 @@ const ProductCard = ({ product }: { product: ShopProduct }) => {
       <div className="bg-[#1E1E1E] rounded-lg overflow-hidden shadow-lg border border-gray-800 hover:border-teal-400 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-400/20 h-full flex flex-col">
         {/* Image */}
         <div className="relative aspect-[4/5] overflow-hidden bg-[#2A2A2A]">
-          <Image
-            src={safeImage}
-            alt={product.name}
-            width={290}
-            height={200}
-            className="w-full object-cover transition duration-500 group-hover:scale-110"
-          />
+          {safeImage ? (
+            <img
+              src={safeImage}
+              alt={product.name}
+              className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/images/jersey1.jpg";
+                target.onerror = null;
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-[#2A2A2A] flex items-center justify-center text-xs text-gray-500">
+              No Image
+            </div>
+          )}
           <span className="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold bg-teal-400 text-[#141313] rounded-full uppercase tracking-wider">
             {product.category}
           </span>

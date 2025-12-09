@@ -44,9 +44,17 @@ const getFullImageUrl = (imagePath: string): string => {
   if (!imagePath) return '';
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
 
+  // Remove /api from the end if present
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
-  let normalizedPath = imagePath.replace(/^\/|\/public\//, '');
-  return `${baseUrl}/${normalizedPath}`;
+
+  // Clean up the path - remove leading slashes and /public/
+  let normalizedPath = imagePath.replace(/^\/+/, '').replace(/^\/public\//, '');
+
+  // Ensure no double slashes
+  const fullUrl = `${baseUrl}/${normalizedPath}`.replace(/([^:])\/{2,}/g, '$1/');
+
+  console.log('Image URL constructed:', { imagePath, baseUrl, normalizedPath, fullUrl });
+  return fullUrl;
 };
 
 interface ProductCardProps {
