@@ -15,8 +15,10 @@ const getImageUrl = (item: CartItem) => {
     if (item.product && item.product.images && item.product.images.length > 0) {
         const img = item.product.images.find(i => i.isPrimary)?.url || item.product.images[0].url;
         if (img.startsWith('http')) return img;
-        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
-        return `${baseUrl}/${img.replace(/^public\//, '').replace(/^\//, '')}`;
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+        const normalizedPath = img.trim().replace(/^\/+/, '').replace(/^public\//, '');
+        return `${baseUrl}/${normalizedPath}`;
     }
     return '/images/jersey1.jpg';
 };
@@ -42,8 +44,9 @@ const getFullImageUrl = (imagePath: string): string => {
     if (!imagePath) return '/images/jersey1.jpg';
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
 
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
-    const normalizedPath = imagePath.replace(/^\/|\/public\//, '');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    const normalizedPath = imagePath.trim().replace(/^\/+/, '').replace(/^public\//, '');
     return `${baseUrl}/${normalizedPath}`;
 };
 

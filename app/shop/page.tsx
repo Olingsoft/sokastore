@@ -42,18 +42,29 @@ const getPrimaryImage = (images: ProductImage[] = []): string => {
 // ------------------ FIX #2: IMPROVED URL NORMALIZATION ------------------
 const getFullImageUrl = (imagePath: string): string => {
   if (!imagePath) return '';
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
 
-  // Remove /api from the end if present
-  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+  // If already a full URL, return as-is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
 
-  // Clean up the path - remove leading slashes and /public/
-  let normalizedPath = imagePath.replace(/^\/+/, '').replace(/^\/public\//, '');
+  // Get base URL and remove /api suffix if present
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const baseUrl = apiUrl.replace(/\/api\/?$/, '');
 
-  // Ensure no double slashes
-  const fullUrl = `${baseUrl}/${normalizedPath}`.replace(/([^:])\/{2,}/g, '$1/');
+  // Normalize the path: remove leading slash and /public/ prefix
+  let normalizedPath = imagePath.trim();
+  normalizedPath = normalizedPath.replace(/^\/+/, ''); // Remove leading slashes
+  normalizedPath = normalizedPath.replace(/^public\//, ''); // Remove /public/ prefix
 
-  console.log('Image URL constructed:', { imagePath, baseUrl, normalizedPath, fullUrl });
+  // Construct full URL
+  const fullUrl = `${baseUrl}/${normalizedPath}`;
+
+  // Debug logging (can be removed in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Image URL construction:', { imagePath, baseUrl, normalizedPath, fullUrl });
+  }
+
   return fullUrl;
 };
 

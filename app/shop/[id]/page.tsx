@@ -68,10 +68,14 @@ const getFullImageUrl = (imagePath: string): string => {
     return imagePath;
   }
 
-  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+  // Get base URL and remove /api suffix if present
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+  const baseUrl = apiUrl.replace(/\/api\/?$/, '');
 
-  // Normalize path to remove ONLY a leading slash or the "public/" prefix
-  let normalizedPath = imagePath.replace(/^public\//, '').replace(/^\//, '');
+  // Normalize path: remove leading slash and /public/ prefix
+  let normalizedPath = imagePath.trim();
+  normalizedPath = normalizedPath.replace(/^\/+/, ''); // Remove leading slashes
+  normalizedPath = normalizedPath.replace(/^public\//, ''); // Remove /public/ prefix
 
   const fullUrl = `${baseUrl}/${normalizedPath}`;
 
