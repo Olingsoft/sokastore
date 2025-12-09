@@ -27,7 +27,7 @@ export default function Header() {
     if (userData) {
       try {
         setUser(JSON.parse(userData));
-        fetchCart();
+        // No need to fetch cart here - CartContext handles it on mount
       } catch (error) {
         console.error('Error parsing user data:', error);
       }

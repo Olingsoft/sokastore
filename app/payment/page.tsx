@@ -57,6 +57,7 @@ export default function PaymentPage() {
         notes: ''
     });
 
+    // Fetch user data on mount
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -106,12 +107,15 @@ export default function PaymentPage() {
         };
 
         fetchUserData();
+    }, []); // Only run once on mount
 
+    // Handle cart empty redirect separately
+    useEffect(() => {
         // Redirect if cart is empty (but not if order was just completed)
         if (!cartLoading && cartItems.length === 0 && !orderCompleted) {
             router.push('/cart');
         }
-    }, [router, cartItems, cartLoading, orderCompleted, BASE_URL]);
+    }, [cartItems.length, cartLoading, orderCompleted, router]); // Use length instead of array to prevent reference changes
 
     // Calculate totals
     const subtotal = cartItems.reduce((acc, item) => {
@@ -512,8 +516,8 @@ export default function PaymentPage() {
 
                                 {/* Cart Items */}
                                 <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-                                    {cartItems.map((item) => (
-                                        <div key={item.id} className="flex gap-3 text-sm">
+                                    {cartItems.map((item, index) => (
+                                        <div key={`cart-item-${item.id}-${index}`} className="flex gap-3 text-sm">
                                             <div className="w-12 h-12 bg-[#2A2A2A] rounded flex-shrink-0">
                                                 {/* You can add product image here */}
                                             </div>
