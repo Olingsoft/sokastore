@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/HeroSection';
 import { ArrowRight, Heart } from 'lucide-react';
@@ -140,7 +140,7 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardPro
   );
 };
 
-export default function LandingPage() {
+function LandingContent() {
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -322,3 +322,14 @@ export default function LandingPage() {
     </div>
   );
 }
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center ml-10">
+      Loading...
+    </div>}>
+      <LandingContent />
+    </Suspense>
+  );
+}
+
