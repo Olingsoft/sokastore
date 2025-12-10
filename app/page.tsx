@@ -106,7 +106,7 @@ const ProductCard = ({ product }: { product: ShopProduct }) => {
           </h3>
           <p className="text-xs text-gray-400 line-clamp-1 mb-2">{product.team}</p>
           <div className="flex items-center justify-between mt-auto">
-            <span className="text-lg font-bold text-teal-400">${product.price.toFixed(2)}</span>
+            <span className="text-lg font-bold text-teal-400">Ksh. {product.price.toFixed(2)}</span>
             <div className="flex items-center text-xs text-gray-400 group-hover:text-teal-400 transition-colors">
               View <ArrowRight className="ml-0.5" size={12} />
             </div>
@@ -213,11 +213,11 @@ export default function LandingPage() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border ${selectedCategory === cat
-                      ? 'bg-gradient-to-r from-green-600 to-teal-600 border-transparent text-white shadow-lg shadow-green-900/20'
-                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white'
+                    ? 'bg-gradient-to-r from-green-600 to-teal-600 border-transparent text-white shadow-lg shadow-green-900/20'
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white'
                     }`}
                 >
-                  {cat} 
+                  {cat}
                 </button>
               ))}
             </div>

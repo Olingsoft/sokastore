@@ -202,7 +202,7 @@ export default function CartPage() {
                                                 </div>
 
                                                 <p className={`font-semibold text-base w-16 text-right ${TEXT_ACCENT_COLOR_CLASS}`}>
-                                                    ${(getProductPrice(item) * item.quantity).toFixed(2)}
+                                                    Ksh. {(getProductPrice(item) * item.quantity).toFixed(2)}
                                                 </p>
 
                                                 <button
@@ -228,21 +228,21 @@ export default function CartPage() {
                                 <div className="space-y-3 pb-4">
                                     <div className="flex justify-between text-gray-300 text-sm">
                                         <span>Subtotal ({cartItems.length} Items)</span>
-                                        <span>${subtotal.toFixed(2)}</span>
+                                        <span>Ksh. {subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-gray-300 text-sm">
                                         <span>Shipping Estimate</span>
-                                        <span>${shipping.toFixed(2)}</span>
+                                        <span>Ksh. {shipping.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-gray-300 text-sm">
                                         <span>Taxes (Estimated)</span>
-                                        <span>${taxes.toFixed(2)}</span>
+                                        <span>Ksh. {taxes.toFixed(2)}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex justify-between text-white font-bold text-lg pt-4 border-t border-gray-700">
                                     <span>Order Total</span>
-                                    <span>${total.toFixed(2)}</span>
+                                    <span>Ksh. {total.toFixed(2)}</span>
                                 </div>
 
                                 <Link href="/payment" className={`block mt-6 text-center ${ACCENT_COLOR_CLASS} text-[#141313] font-bold py-3 rounded-lg shadow-md ${cartItems.length === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -293,7 +293,7 @@ export default function CartPage() {
                                                         {product.name}
                                                     </h3>
                                                     <p className="text-teal-400 font-bold mt-1">
-                                                        ${Number(product.price).toFixed(2)}
+                                                        Ksh. {Number(product.price).toFixed(2)}
                                                     </p>
                                                 </div>
                                             </Link>

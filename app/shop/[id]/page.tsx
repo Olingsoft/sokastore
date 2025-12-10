@@ -111,7 +111,7 @@ const ProductCard = ({ product }: { product: Product }) => (
     <div className="p-3">
       <h3 className="font-semibold text-white mb-1 text-base line-clamp-1">{product.name}</h3>
       <div className="flex justify-between items-center pt-2">
-        <span className="text-teal-400 font-bold text-lg">${product.price.toFixed(2)}</span>
+        <span className="text-teal-400 font-bold text-lg">Ksh. {product.price.toFixed(2)}</span>
         <button className="text-xs bg-gray-700 hover:bg-teal-400 hover:text-[#141313] text-white py-1 px-3 rounded-full transition">View</button>
       </div>
     </div>
@@ -346,7 +346,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-4">
             <div>
               <h1 className="text-3xl text-white font-extrabold mb-1">{product.name}</h1>
-              <p className="text-xl font-semibold text-teal-400 mb-3">${product.price.toFixed(2)}</p>
+              <p className="text-xl font-semibold text-teal-400 mb-3">Ksh. {product.price.toFixed(2)}</p>
               <p className="text-gray-300 text-sm">{product.description}</p>
             </div>
 
@@ -377,7 +377,7 @@ export default function ProductDetailPage() {
                   <Disclosure.Button className="flex w-full justify-between items-center py-3 text-left">
                     <h3 className="text-base font-semibold text-white">
                       Customization ({isCustomized ? 'Applied' : 'Optional'})
-                      {isCustomized && <span className='ml-2 text-teal-400 text-sm'>+${product.pricePerCustomization?.toFixed(2)}</span>}
+                      {isCustomized && <span className='ml-2 text-teal-400 text-sm'>+ Ksh. {product.pricePerCustomization?.toFixed(2)}</span>}
                     </h3>
                     <ChevronDownIcon className={`${open ? 'rotate-180 transform' : ''} h-5 w-5 text-gray-400 transition-transform`} aria-hidden="true" />
                   </Disclosure.Button>
@@ -434,7 +434,7 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="text-right">
                   <span className="text-sm text-gray-400 block">Total Price</span>
-                  <div className="text-2xl font-bold text-teal-400">${totalPrice.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-teal-400">Ksh. {totalPrice.toFixed(2)}</div>
                 </div>
               </div>
 

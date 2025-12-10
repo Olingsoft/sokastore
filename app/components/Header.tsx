@@ -58,8 +58,8 @@ export default function Header() {
     <header className="bg-[#0a0f0a] text-white border-b border-gray-800 sticky top-0 z-50">
       {/* Top Bar */}
       <div className="w-full flex justify-center text-center gap-5 p-2 bg-green-800">
-        <span className="text-sm">tell : +25769210601</span>
-        <span className="text-white text-sm">whatsapp: +254769210601</span>
+        <span className="text-sm">tell : +254 759 221095</span>
+        <span className="text-white text-sm">whatsapp: +254 759 221095</span>
       </div>
 
       {/* Main Header */}

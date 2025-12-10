@@ -303,7 +303,7 @@ export default function AddProductPage() {
               </InputField>
               
               <InputField
-                label="Price ($)"
+                label="Price (Ksh.)"
                 name="price"
                 icon={DollarSign}
                 placeholder="e.g., 59.99"

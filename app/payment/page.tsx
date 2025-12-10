@@ -247,7 +247,7 @@ export default function PaymentPage() {
             const customizationFee = Number(item.customizationFee) || 0;
             const itemTotal = (price + customizationFee) * item.quantity;
 
-            let details = `${index + 1}. ${item.product?.name || 'Product'} - Qty: ${item.quantity} × $${(price + customizationFee).toFixed(2)} = $${itemTotal.toFixed(2)}`;
+            let details = `${index + 1}. ${item.product?.name || 'Product'} - Qty: ${item.quantity} × Ksh. ${(price + customizationFee).toFixed(2)} = Ksh. ${itemTotal.toFixed(2)}`;
 
             if (item.customization) {
                 details += `\n   Customization: ${item.customization.playerName || ''} ${item.customization.playerNumber || ''} ${item.customization.selectedBadge ? `(${item.customization.selectedBadge})` : ''}`;
@@ -270,10 +270,10 @@ export default function PaymentPage() {
             `*Order Summary:*\n` +
             `${itemsList}\n\n` +
             `*Order Totals:*\n` +
-            `Subtotal: $${subtotal.toFixed(2)}\n` +
-            `Delivery Fee: $${deliveryFee.toFixed(2)}\n` +
-            `Tax (8%): $${taxAmount.toFixed(2)}\n` +
-            `*TOTAL: $${totalAmount.toFixed(2)}*\n\n` +
+            `Subtotal: Ksh. ${subtotal.toFixed(2)}\n` +
+            `Delivery Fee: Ksh. ${deliveryFee.toFixed(2)}\n` +
+            `Tax (8%): Ksh. ${taxAmount.toFixed(2)}\n` +
+            `*TOTAL: Ksh. ${totalAmount.toFixed(2)}*\n\n` +
             (formData.notes ? `*Additional Notes:*\n${formData.notes}\n\n` : '') +
             `Thank you for your order! 🙏`;
 
@@ -527,7 +527,7 @@ export default function PaymentPage() {
                                                     {item.product?.name || 'Product'}
                                                 </div>
                                                 <div className="text-gray-400 text-xs">
-                                                    Qty: {item.quantity} × ${(Number(item.price) + (Number(item.customizationFee) || 0)).toFixed(2)}
+                                                    Qty: {item.quantity} × Ksh. {(Number(item.price) + (Number(item.customizationFee) || 0)).toFixed(2)}
                                                 </div>
                                                 {item.customization && (
                                                     <div className="text-xs text-teal-400 mt-1">
@@ -536,7 +536,7 @@ export default function PaymentPage() {
                                                 )}
                                             </div>
                                             <div className="text-teal-400 font-semibold">
-                                                ${((Number(item.price) + (Number(item.customizationFee) || 0)) * item.quantity).toFixed(2)}
+                                                Ksh. {((Number(item.price) + (Number(item.customizationFee) || 0)) * item.quantity).toFixed(2)}
                                             </div>
                                         </div>
                                     ))}
@@ -546,19 +546,19 @@ export default function PaymentPage() {
                                 <div className="space-y-2 pt-4 border-t border-gray-700">
                                     <div className="flex justify-between text-sm text-gray-300">
                                         <span>Subtotal ({cartItems.length} items)</span>
-                                        <span>${subtotal.toFixed(2)}</span>
+                                        <span>Ksh. {subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm text-gray-300">
                                         <span>Delivery Fee</span>
-                                        <span>${deliveryFee.toFixed(2)}</span>
+                                        <span>Ksh. {deliveryFee.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm text-gray-300">
                                         <span>Tax (8%)</span>
-                                        <span>${taxAmount.toFixed(2)}</span>
+                                        <span>Ksh. {taxAmount.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold text-white pt-3 border-t border-gray-700">
                                         <span>Total</span>
-                                        <span className="text-teal-400">${totalAmount.toFixed(2)}</span>
+                                        <span className="text-teal-400">Ksh. {totalAmount.toFixed(2)}</span>
                                     </div>
                                 </div>
 

@@ -135,7 +135,7 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardPro
 
           {/* Price and Action */}
           <div className="flex items-center justify-between mt-auto">
-            <span className="text-lg font-bold text-teal-400">${product.price.toFixed(2)}</span>
+            <span className="text-lg font-bold text-teal-400">Ksh. {product.price.toFixed(2)}</span>
             <div className="flex items-center text-xs text-gray-400 group-hover:text-teal-400 transition-colors">
               View <ArrowRight className="ml-0.5" size={12} />
             </div>
