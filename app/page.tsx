@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import Hero from './components/HeroSection';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Heart } from 'lucide-react';
 import Footer from './components/Footer';
 import { ProductCardSkeleton } from './components/SkeletonLoader';
 import Link from 'next/link';
@@ -69,7 +69,13 @@ const getFullImageUrl = (imagePath: string): string => {
 };
 
 // --- PRODUCT CARD COMPONENT ---
-const ProductCard = ({ product }: { product: ShopProduct }) => {
+interface ProductCardProps {
+  product: ShopProduct;
+  isWishlisted: boolean;
+  onToggleWishlist: () => void;
+}
+
+const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardProps) => {
   const safeImage = product.image || "/images/jersey1.jpg";
 
   return (
@@ -96,6 +102,23 @@ const ProductCard = ({ product }: { product: ShopProduct }) => {
           <span className="absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold bg-teal-400 text-[#141313] rounded-full uppercase tracking-wider">
             {product.category}
           </span>
+
+          {/* Wishlist Button */}
+          <button
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-all"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleWishlist();
+            }}
+          >
+            <Heart
+              size={14}
+              className={isWishlisted ? "text-red-500" : "text-white"}
+              fill={isWishlisted ? "currentColor" : "none"}
+            />
+          </button>
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
@@ -123,8 +146,17 @@ export default function LandingPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [wishlistIds, setWishlistIds] = useState<number[]>([]);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
+  const toggleWishlist = (productId: number) => {
+    setWishlistIds((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -261,7 +293,12 @@ export default function LandingPage() {
               // Compact Grid: 5 columns on large screens, smaller gaps
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isWishlisted={wishlistIds.includes(product.id)}
+                    onToggleWishlist={() => toggleWishlist(product.id)}
+                  />
                 ))}
               </div>
             )}

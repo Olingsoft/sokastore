@@ -142,7 +142,8 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false); // New state for modal
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -439,7 +440,7 @@ export default function ProductDetailPage() {
               </div>
 
               <button
-                onClick={() => {
+                onClick={async () => {
                   const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('token');
                   if (!isLoggedIn) {
                     if (typeof window !== 'undefined') {
@@ -449,27 +450,32 @@ export default function ProductDetailPage() {
                     return;
                   }
 
-                  console.log('[ShopPage] Adding to cart:', {
-                    productId: product.id,
-                    quantity,
-                    size: selectedSize,
-                    type: selectedType,
-                    customization: isCustomized ? customization : undefined
-                  });
-
-                  addToCart(product, quantity, {
+                  setIsAddingToCart(true);
+                  await addToCart(product, quantity, {
                     size: selectedSize,
                     type: selectedType,
                     customization: isCustomized ? customization : undefined,
                     customizationFee: isCustomized ? customizationFee : 0
                   });
-
-                  // Show success modal
-                  setShowSuccessModal(true);
+                  setIsAddingToCart(false);
+                  setIsAddedToCart(true);
+                  // Reset after 3 seconds
+                  setTimeout(() => setIsAddedToCart(false), 3000);
                 }}
-                className="w-full font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider bg-teal-400 hover:bg-teal-500 text-[#141313]"
+                disabled={isAddingToCart || isAddedToCart}
+                className={`w-full font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2 uppercase tracking-wider ${isAddedToCart ? 'bg-green-500 text-white' : 'bg-teal-400 hover:bg-teal-500 text-[#141313]'} ${isAddingToCart || isAddedToCart ? 'cursor-not-allowed' : ''}`}
               >
-                <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
+                {isAddingToCart ? (
+                  'Adding...'
+                ) : isAddedToCart ? (
+                  <>
+                    <CheckCircleIcon className='w-5 h-5' /> Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBagIcon className='w-5 h-5' /> Add to Bag
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -492,38 +498,7 @@ export default function ProductDetailPage() {
       </main>
       <Footer />
 
-      {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 backdrop-blur-lg flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E1E1E] rounded-xl p-6 max-w-md w-full border border-gray-700 shadow-2xl">
-            <div className="flex items-center justify-center mb-4">
-              <div className="bg-teal-400 rounded-full p-3">
-                <CheckCircleIcon className="w-8 h-8 text-[#141313]" />
-              </div>
-            </div>
-            <h3 className="text-xl font-bold text-white text-center mb-2">
-              Added to Cart!
-            </h3>
-            <p className="text-gray-400 text-center mb-6">
-              {product.name} has been added to your cart.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/cart"
-                className="flex-1 bg-teal-400 hover:bg-teal-500 text-[#141313] font-bold py-3 rounded-lg text-center transition"
-              >
-                Go to Cart
-              </Link>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg transition"
-              >
-                Continue Shopping
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
