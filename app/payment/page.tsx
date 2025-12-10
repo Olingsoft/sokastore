@@ -193,8 +193,9 @@ export default function PaymentPage() {
                 },
                 body: JSON.stringify({
                     ...formData,
-                    deliveryFee,
-                    items: cartItems // Include items with customization for backend
+                    deliveryFee
+                    // Backend fetches items from the database cart, so we don't need to send them here
+                    // preventing 413 Payload Too Large errors if images are large
                 })
             });
 

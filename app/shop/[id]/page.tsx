@@ -8,6 +8,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
+import { ProductDetailSkeleton, RelatedProductsSkeleton } from '../../components/SkeletonLoader';
 
 interface ProductImage {
   id?: number;
@@ -262,8 +263,19 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#141313]">
-        <div className="text-gray-400">Loading product...</div>
+      <div className="min-h-screen bg-[#141313]">
+        <Header />
+        <main>
+          <div className="bg-[#1E1E1E] border-b border-gray-800">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+              <Link href="/shop" className="inline-flex items-center text-gray-400 hover:text-white text-sm transition-colors">
+                <ArrowLeftIcon className="w-4 h-4 mr-1" /> Shop All Jerseys
+              </Link>
+            </div>
+          </div>
+          <ProductDetailSkeleton />
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -468,7 +480,7 @@ export default function ProductDetailPage() {
             <h2 className="text-xl font-bold text-white mb-6">You Might Also Like</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {relatedLoading ? (
-                <div className="col-span-full text-gray-400">Loading suggestions...</div>
+                <RelatedProductsSkeleton />
               ) : relatedProducts.length === 0 ? (
                 <div className="col-span-full text-gray-400">No related products found.</div>
               ) : (

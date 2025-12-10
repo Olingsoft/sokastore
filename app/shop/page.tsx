@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { ProductCardSkeleton } from '../components/SkeletonLoader';
 
 interface ShopProduct {
   id: number;
@@ -210,45 +211,161 @@ const ShopContent = () => {
     return productCat === categoryParam;
   });
 
+  // Get category display name
+  const getCategoryDisplayName = () => {
+    if (!categoryParam) return null;
+    return categoryParam.split('-').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white font-sans">
       <Header />
 
       <main>
-        {/* Filter Button */}
-        <div className="px-4 sm:px-6 md:px-12 py-2 flex justify-end">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-gray-900 w-full hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 shadow-md"
-          >
-            Filter
-            {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-        </div>
+        {/* Hero Banner */}
+        <section className="relative bg-gradient-to-r from-teal-600 via-green-600 to-emerald-600 py-16 px-4 overflow-hidden">
+          {/* Animated background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+              backgroundSize: '40px 40px'
+            }} />
+          </div>
 
-        {/* Filters Section */}
+          <div className="relative max-w-7xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight">
+              {categoryParam ? getCategoryDisplayName() : 'All Products'}
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+              {categoryParam
+                ? `Explore our collection of ${getCategoryDisplayName()} jerseys`
+                : 'Discover premium jerseys from your favorite teams and leagues'
+              }
+            </p>
+          </div>
+        </section>
+
+        {/* Breadcrumb & Filter Section */}
+        <section className="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Breadcrumb */}
+              <nav className="flex items-center space-x-2 text-sm">
+                <Link href="/" className="text-gray-400 hover:text-teal-400 transition-colors">
+                  Home
+                </Link>
+                <span className="text-gray-600">/</span>
+                <Link href="/shop" className="text-gray-400 hover:text-teal-400 transition-colors">
+                  Shop
+                </Link>
+                {categoryParam && (
+                  <>
+                    <span className="text-gray-600">/</span>
+                    <span className="text-teal-400 font-semibold">{getCategoryDisplayName()}</span>
+                  </>
+                )}
+              </nav>
+
+              {/* Product Count & Filter Button */}
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-400">
+                  <span className="font-semibold text-teal-400">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
+                </div>
+
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="bg-gray-700 hover:bg-teal-600 text-white font-medium py-2 px-6 rounded-lg flex items-center gap-2 shadow-lg transition-all duration-300 hover:shadow-teal-500/50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  Filters
+                  {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Filters Panel */}
         <section
-          className={`bg-[#141313] text-white py-4 px-4 sm:px-6 md:px-12 transition-all duration-300 ${showFilters ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+          className={`bg-gray-800 border-b border-gray-700 transition-all duration-300 overflow-hidden ${showFilters ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
             }`}
         >
-          {/* Place your filter controls here */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Filter options can be added here */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-teal-400 text-sm uppercase tracking-wider">Price Range</h3>
+                <div className="text-gray-400 text-sm">Coming soon...</div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-semibold text-teal-400 text-sm uppercase tracking-wider">Size</h3>
+                <div className="text-gray-400 text-sm">Coming soon...</div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-semibold text-teal-400 text-sm uppercase tracking-wider">League</h3>
+                <div className="text-gray-400 text-sm">Coming soon...</div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Products Grid */}
-        <section className="px-4 py-2 sm:px-6 md:px-12 -mt-2">
+        <section className="px-4 py-8 sm:px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {categoryParam && (
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white">
+                  {getCategoryDisplayName()} Collection
+                </h2>
+                <Link
+                  href="/shop"
+                  className="text-sm text-teal-400 hover:text-teal-300 transition-colors flex items-center gap-1"
+                >
+                  View All Products
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {isLoading ? (
-                <div className="col-span-full text-center py-8 text-gray-500 text-sm">
-                  Loading products...
-                </div>
+                <>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
+                </>
               ) : error ? (
-                <div className="col-span-full text-center py-8 text-red-500 text-sm">
-                  {error}
+                <div className="col-span-full text-center py-16">
+                  <div className="bg-red-900/20 border border-red-800 rounded-lg p-6 max-w-md mx-auto">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
                 </div>
               ) : filteredProducts.length === 0 ? (
-                <div className="col-span-full text-center py-8 text-gray-500 text-sm">
-                  No products available.
+                <div className="col-span-full text-center py-16">
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 max-w-md mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <h3 className="text-xl font-semibold text-gray-300 mb-2">No Products Found</h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                      {categoryParam
+                        ? `We couldn't find any products in "${getCategoryDisplayName()}"`
+                        : "No products available at the moment"
+                      }
+                    </p>
+                    <Link
+                      href="/shop"
+                      className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                    >
+                      Browse All Products
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 filteredProducts.map((product) => (

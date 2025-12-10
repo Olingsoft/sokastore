@@ -1,20 +1,47 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+}
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const searchParams = useSearchParams();
 
-  const categories = [
-    { id: 1, name: 'Premier League', count: 10 },
-    { id: 2, name: 'La Liga', count: 8 },
-    { id: 3, name: 'Serie A', count: 7 },
-    { id: 4, name: 'Bundesliga', count: 6 },
-    { id: 5, name: 'Ligue 1', count: 5 },
-    { id: 6, name: 'National Teams', count: 12 },
-  ];
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true);
+        const response = await fetch(`${apiUrl}/categories?limit=20`);
+        if (!response.ok) throw new Error('Failed to fetch categories');
+
+        const data = await response.json();
+        const categoriesList = Array.isArray(data?.data) ? data.data : [];
+        setCategories(categoriesList);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Fallback to default categories on error
+        setCategories([]);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, [apiUrl]);
 
   const slides = [
     {
@@ -45,32 +72,47 @@ export default function HeroSection() {
   const prevSlide = () => setCurrentSlide(prev => (prev === 0 ? slides.length - 1 : prev - 1));
 
   return (
-    <section className="bg-gradient-to-b from-[#0a0f0a] to-[#1a1f1a] text-white py-8">
-      <div className="container mx-auto px-4">
+    <section className="bg-gradient-to-b from-[#0a0f0a] to-[#1a1f1a] text-white py-1">
+      <div className="container mx-auto px-0">
         <div className="flex flex-col lg:flex-row gap-6">
-
           {/* Categories */}
           <div className="w-full lg:w-1/5 bg-gray-900/50 rounded-lg p-4 lg:p-6">
-            <h2 className="text-xl font-bold mb-4">Categories</h2>
-            <ul className="flex lg:flex-col gap-3 overflow-x-auto scrollbar-hide">
-              {categories.map(cat => (
-                <li key={cat.id} className="flex-shrink-0 lg:flex-shrink-1 min-w-[120px] lg:min-w-full flex justify-between items-center p-2 hover:bg-gray-800/50 rounded cursor-pointer transition-colors">
-                  <span>{cat.name}</span>
-                  <span className="text-gray-400 text-sm">({cat.count})</span>
-                </li>
-              ))}
-            </ul>
+            <h2 className="text-sm font-bold mb-4">Categories</h2>
+            {isLoadingCategories ? (
+              <div className="text-gray-400 text-sm">Loading...</div>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {categories.map(cat => {
+                  const isActive = searchParams.get('category') === cat.slug;
+                  return (
+                    <li key={cat._id}>
+                      <Link
+                        href={`/shop?category=${cat.slug}`}
+                        className={`block whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 border ${isActive
+                          ? 'bg-gradient-to-r from-green-600 to-teal-600 border-transparent text-white shadow-lg shadow-green-900/20'
+                          : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white'
+                          }`}
+                      >
+                        {cat.name}
+                      </Link>
+                    </li>
+                  );
+                })}
+                {categories.length === 0 && !isLoadingCategories && (
+                  <li className="text-gray-400 text-sm">No categories available</li>
+                )}
+              </ul>
+            )}
           </div>
 
           {/* Main Slider */}
           <div className="w-full lg:w-3/5 relative">
             <div className="relative h-64 sm:h-80 md:h-96 bg-gray-800 rounded-lg overflow-hidden">
               {slides.map((slide, index) => (
-                <div 
+                <div
                   key={slide.id}
-                  className={`absolute inset-0 transition-opacity duration-500 ${
-                    index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                  }`}
+                  className={`absolute inset-0 transition-opacity duration-500 ${index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent z-10 p-6 sm:p-8 flex flex-col justify-center">
                     <div className="max-w-md">
