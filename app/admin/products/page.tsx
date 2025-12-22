@@ -161,7 +161,7 @@ export default function AdminProducts() {
             <div>
               <h1 className="text-3xl font-bold mb-2">Manage Products</h1>
               {/* categories fetch from database */}
-              <div className="flex gap-2">
+              {/* <div className="flex gap-2">
                 <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm">
                   All Categories
                 </button>
@@ -178,7 +178,7 @@ export default function AdminProducts() {
                     </button>
                   ))
                 )}
-              </div>
+              </div> */}
             </div>
             
             <Link href="/admin/products/add">
@@ -295,10 +295,41 @@ export default function AdminProducts() {
                               <Pencil size={18} />
                             </button>
                             <button
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this product?')) {
-                                  // Add delete logic here
-                                  console.log('Delete product:', product.id);
+                              onClick={async () => {
+                                if (!confirm('Are you sure you want to delete this product?')) {
+                                  return;
+                                }
+
+                                try {
+                                  const token = typeof window !== 'undefined'
+                                    ? localStorage.getItem('token')
+                                    : null;
+
+                                  if (!token) {
+                                    alert('You are not authenticated. Please log in again.');
+                                    return;
+                                  }
+
+                                  const response = await fetch(`${apiUrl}/products/${product.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`,
+                                      'Content-Type': 'application/json',
+                                    },
+                                  });
+
+                                  if (!response.ok) {
+                                    const errorText = await response.text();
+                                    console.error('Failed to delete product:', response.status, errorText);
+                                    alert('Failed to delete product. Please try again.');
+                                    return;
+                                  }
+
+                                  // Remove deleted product from local state
+                                  setProducts((prev) => prev.filter((p) => p.id !== product.id));
+                                } catch (err) {
+                                  console.error('Error deleting product:', err);
+                                  alert('An error occurred while deleting the product. Please try again.');
                                 }
                               }}
                               className="p-2 rounded-lg bg-[#2A2A2A] hover:bg-red-600/30 transition"

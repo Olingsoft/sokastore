@@ -1,13 +1,22 @@
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from "lucide-react";
 
+import Image from "next/image";
+import Link from "next/link";
 const Footer = () => {
   return (
     <footer className="bg-[#141313] text-white pt-12 pb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
         
         {/* --- Brand Section --- */}
+      
         <div>
-          <h2 className="text-2xl font-extrabold text-white mb-3">Soka<span className="text-[#0d9488]">Store</span></h2>
+        <div>
+        <Image src="/soccastore.png" alt="SoccaStore logo" width={100} height={100} className="ml-10"/>
+        {/* Logo */}
+        <Link href="/" className="text-2xl font-extrabold tracking-wide text-green-400 whitespace-nowrap">
+          Socca<span className="text-white">Store<span className="text-sm">.ke</span></span>
+        </Link>
+        </div>
           <p className="text-sm text-gray-400 leading-relaxed">
             Discover premium quality jerseys for your favorite teams.  
             Authentic, stylish, and built for real fans.
@@ -40,8 +49,8 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-semibold mb-3 text-[#0d9488]">Get in Touch</h3>
           <ul className="space-y-2 text-gray-400">
-            <li className="flex items-center gap-2"><Phone size={16}/> +254 712 345 678</li>
-            <li className="flex items-center gap-2"><Mail size={16}/> support@jerseystore.com</li>
+            <li className="flex items-center gap-2"><Phone size={16}/> +254 75922105</li>
+            <li className="flex items-center gap-2"><Mail size={16}/> support@soccastore.ke</li>
             <li className="flex items-center gap-2"><MapPin size={16}/> Nairobi, Kenya</li>
           </ul>
 

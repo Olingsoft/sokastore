@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import { Menu as HeadlessMenu, Transition } from '@headlessui/react';
 import { Search, Menu as MenuIcon, X, User, ShoppingCart, LogOut, UserCircle, Package } from 'lucide-react';
@@ -73,9 +74,11 @@ export default function Header() {
           {open ? <X size={24} /> : <MenuIcon size={24} />}
         </button>
 
+        {/* add logo image here */}
+        <Image src="/soccastore.png" alt="SoccaStore logo" width={100} height={100} className="ml-10"/>
         {/* Logo */}
         <Link href="/" className="text-2xl font-extrabold tracking-wide text-green-400 whitespace-nowrap">
-          Soka<span className="text-white">Store<span className="text-sm">.ke</span></span>
+          Socca<span className="text-white">Store<span className="text-sm">.ke</span></span>
         </Link>
 
         {/* Desktop Navigation */}
