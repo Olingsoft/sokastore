@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Header from './components/Header';
 import Hero from './components/HeroSection';
 import { ArrowRight, Heart } from 'lucide-react';
@@ -325,9 +326,33 @@ function LandingContent() {
 
 export default function LandingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center ml-10">
-      Loading...
-    </div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-b from-black via-[#060b06] to-black flex items-center justify-center px-6">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-green-900/40 bg-gradient-to-br from-[#0b160b] via-[#0e1e0e] to-black shadow-[0_15px_60px_-25px_rgba(34,197,94,0.7)]">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400/5 via-transparent to-emerald-400/5 blur-3xl animate-pulse" />
+            <div className="relative p-8 flex flex-col items-center gap-6">
+              <div className="h-24 w-24 rounded-2xl bg-black/40 border border-green-400/30 flex items-center justify-center animate-pulse">
+                <Image
+                  src="/soccastore.png"
+                  alt="SoccaStore loading"
+                  width={96}
+                  height={96}
+                  className="drop-shadow-[0_0_18px_rgba(34,197,94,0.35)] animate-bounce"
+                  priority
+                />
+              </div>
+              <p className="text-sm font-semibold text-green-100 tracking-wide">Loading SoccaStore...</p>
+              <div className="flex items-center gap-2 text-[11px] text-gray-400 uppercase tracking-[0.2em]">
+                <span className="h-2 w-2 rounded-full bg-green-400 animate-ping" />
+                <span className="h-2 w-2 rounded-full bg-emerald-300 animate-ping delay-150" />
+                <span className="h-2 w-2 rounded-full bg-teal-300 animate-ping delay-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
       <LandingContent />
     </Suspense>
   );
