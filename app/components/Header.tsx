@@ -75,10 +75,10 @@ export default function Header() {
         </button>
 
         {/* add logo image here */}
-        <Image src="/soccastore.png" alt="SoccaStore logo" width={100} height={100} className="ml-10"/>
+        <Image src="/soccastore.png" alt="SoccaStore logo" width={100} height={100} className="md:ml-10"/>
         {/* Logo */}
         <Link href="/" className="text-2xl font-extrabold tracking-wide text-green-400 whitespace-nowrap">
-          Socca<span className="text-white">Store<span className="text-sm">.ke</span></span>
+          Socca<span className="text-white">Store<span className="text-sm">.co.ke</span></span>
         </Link>
 
         {/* Desktop Navigation */}
