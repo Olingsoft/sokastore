@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { toast } from 'sonner';
 
 export interface CartItem {
-    id: number;
+    _id: string; // Changed from id to _id to match Mongoose
     productId: number;
     product?: {
         id: number;
@@ -30,8 +30,8 @@ interface CartContextType {
     cartCount: number;
     isLoading: boolean;
     addToCart: (product: any, quantity: number, options: any) => Promise<void>;
-    removeFromCart: (itemId: number) => Promise<void>;
-    updateQuantity: (itemId: number, quantity: number) => Promise<void>;
+    removeFromCart: (itemId: string) => Promise<void>;
+    updateQuantity: (itemId: string, quantity: number) => Promise<void>;
     fetchCart: () => Promise<void>;
     clearCart: () => Promise<void>;
 }
@@ -145,7 +145,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const removeFromCart = async (itemId: number) => {
+    const removeFromCart = async (itemId: string) => {
         const token = getToken();
         if (!token) return;
 
@@ -168,7 +168,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const updateQuantity = async (itemId: number, quantity: number) => {
+    const updateQuantity = async (itemId: string, quantity: number) => {
         const token = getToken();
         if (!token) return;
 

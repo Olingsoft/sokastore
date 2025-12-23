@@ -115,7 +115,7 @@ export default function CartPage() {
     }, 0);
 
     const shipping = subtotal > 0 ? 7.00 : 0;
-    const taxes = subtotal * 0.08; // Example 8% tax
+    const taxes = 0; // Tax removed
     const total = subtotal + shipping + taxes;
 
     if (isLoading) {
@@ -150,7 +150,7 @@ export default function CartPage() {
                             ) : (
                                 cartItems.map((item) => (
                                     <div
-                                        key={item.id}
+                                        key={item._id}
                                         className="flex items-start bg-[#1E1E1E] rounded-lg p-3 sm:p-4 gap-4 transition duration-200"
                                     >
                                         {/* Image */}
@@ -180,7 +180,7 @@ export default function CartPage() {
                                                 )}
 
                                                 <button
-                                                    onClick={() => removeFromCart(item.id)}
+                                                    onClick={() => removeFromCart(item._id)}
                                                     className="text-xs text-gray-500 hover:text-red-500 mt-1 flex items-center gap-1 transition sm:hidden"
                                                 >
                                                     Remove
@@ -191,12 +191,12 @@ export default function CartPage() {
                                             <div className="flex items-center space-x-6 sm:space-x-8">
                                                 <div className="flex items-center bg-[#2A2A2A] rounded-full border border-gray-700">
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                                                        onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))}
                                                         className="px-2 py-0.5 text-sm hover:text-teal-400 rounded-l-full"
                                                     >-</button>
                                                     <span className="w-8 text-center text-sm font-medium text-white">{item.quantity}</span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
                                                         className="px-2 py-0.5 text-sm hover:text-teal-400 rounded-r-full"
                                                     >+</button>
                                                 </div>
@@ -206,7 +206,7 @@ export default function CartPage() {
                                                 </p>
 
                                                 <button
-                                                    onClick={() => removeFromCart(item.id)}
+                                                    onClick={() => removeFromCart(item._id)}
                                                     className="hidden sm:block text-gray-500 hover:text-red-500 p-1 rounded-full transition flex-shrink-0"
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
