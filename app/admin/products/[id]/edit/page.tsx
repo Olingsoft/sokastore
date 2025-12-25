@@ -24,6 +24,9 @@ interface Product {
   size: string;
   hasCustomization: boolean;
   customizationDetails: string;
+  hasVersions?: boolean;
+  priceFan?: number;
+  pricePlayer?: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -137,7 +140,7 @@ export default function EditProductPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -174,7 +177,7 @@ export default function EditProductPage() {
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Append all form fields
       Object.entries(formData).forEach(([key, value]) => {
         if (key !== 'images' && value !== undefined) {
@@ -424,9 +427,8 @@ export default function EditProductPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {formData.images?.map((image) => (
                       <div key={image.id} className="relative group">
-                        <div className={`aspect-square rounded-lg overflow-hidden border-2 ${
-                          image.isPrimary ? 'border-blue-500' : 'border-transparent'
-                        }`}>
+                        <div className={`aspect-square rounded-lg overflow-hidden border-2 ${image.isPrimary ? 'border-blue-500' : 'border-transparent'
+                          }`}>
                           <img
                             src={image.url.startsWith('http') ? image.url : `${apiUrl}${image.url}`}
                             alt={`Product ${image.id}`}
@@ -533,6 +535,56 @@ export default function EditProductPage() {
                       />
                     </div>
                   )}
+                </div>
+
+                {/* Version Pricing Section */}
+                <div className="pt-8 border-t border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-700">
+                    Version Pricing
+                  </h2>
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="hasVersions"
+                        name="hasVersions"
+                        checked={!!formData.hasVersions}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 rounded border-gray-600 focus:ring-blue-500 bg-gray-700"
+                        disabled={isLoading}
+                      />
+                      <label htmlFor="hasVersions" className="ml-2 text-sm text-gray-300">
+                        Enable separate prices for Fan and Player versions
+                      </label>
+                    </div>
+
+                    {formData.hasVersions && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <InputField
+                          label="Fan Version Price"
+                          name="priceFan"
+                          icon={DollarSign}
+                          placeholder="0.00"
+                          value={formData.priceFan || ''}
+                          onChange={handleChange}
+                          type="number"
+                          step="0.01"
+                          disabled={isLoading}
+                        />
+                        <InputField
+                          label="Player Version Price"
+                          name="pricePlayer"
+                          icon={DollarSign}
+                          placeholder="0.00"
+                          value={formData.pricePlayer || ''}
+                          onChange={handleChange}
+                          type="number"
+                          step="0.01"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -75,7 +75,7 @@ export default function Header() {
         </button>
 
         {/* add logo image here */}
-        <Image src="/soccastore.png" alt="SoccaStore logo" width={100} height={100} className="md:ml-10"/>
+        <Image src="/soccastore.png" alt="SoccaStore logo" width={100} height={100} className="md:ml-10" />
         {/* Logo */}
         <Link href="/" className="text-2xl font-extrabold tracking-wide text-green-400 whitespace-nowrap">
           Socca<span className="text-white">Store<span className="text-sm">.co.ke</span></span>
@@ -86,6 +86,8 @@ export default function Header() {
           <Link href="/" className="hover:text-green-400 transition">Home</Link>
           <Link href="/shop" className="hover:text-green-400 transition">Shop</Link>
           <Link href="/collections" className="hover:text-green-400 transition">Collections</Link>
+          <Link href="/blogs" className="hover:text-green-400 transition">Blogs</Link>
+
         </nav>
 
         {/* Search Bar - Desktop */}
@@ -223,6 +225,10 @@ export default function Header() {
             <Link href="/collections" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
               Collections
             </Link>
+            <Link href="/blogs" className="px-4 py-2 hover:bg-gray-800 hover:text-green-400 transition" onClick={() => setOpen(false)}>
+              Blogs
+            </Link>
+
 
             {user ? (
               <>

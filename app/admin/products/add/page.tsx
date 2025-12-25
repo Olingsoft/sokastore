@@ -15,6 +15,9 @@ interface ProductFormData {
   imageFiles: File[];
   hasCustomization: boolean;
   customizationDetails: string;
+  hasVersions: boolean;
+  priceFan: number | string;
+  pricePlayer: number | string;
 }
 
 // InputField Props Interface
@@ -31,14 +34,14 @@ interface InputFieldProps {
 }
 
 // Moved InputField component outside to prevent re-creation on every render
-const InputField: React.FC<InputFieldProps> = ({ 
-  label, 
-  name, 
-  icon: Icon, 
-  type = 'text', 
-  placeholder, 
-  value, 
-  onChange, 
+const InputField: React.FC<InputFieldProps> = ({
+  label,
+  name,
+  icon: Icon,
+  type = 'text',
+  placeholder,
+  value,
+  onChange,
   children,
   step
 }) => (
@@ -89,7 +92,7 @@ export default function AddProductPage() {
   const [categoriesDb, setCategoriesDb] = useState<{ id: string | number; name: string; slug: string }[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     price: '',
@@ -99,8 +102,11 @@ export default function AddProductPage() {
     imageFiles: [],
     hasCustomization: false,
     customizationDetails: '',
+    hasVersions: false,
+    priceFan: '',
+    pricePlayer: '',
   });
-  
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -123,17 +129,17 @@ export default function AddProductPage() {
     };
     fetchCategories();
   }, [apiUrl]);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, type } = e.target;
-    const value = type === 'checkbox' 
-      ? (e.target as HTMLInputElement).checked 
+    const value = type === 'checkbox'
+      ? (e.target as HTMLInputElement).checked
       : e.target.value;
-      
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -160,9 +166,9 @@ export default function AddProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const formDataToSend = new FormData();
-    
+
     // Format category by matching fetched category names
     const formatCategory = (category: string): string => {
       const found = categoriesDb.find(
@@ -183,12 +189,15 @@ export default function AddProductPage() {
     formDataToSend.append('description', formData.description);
     formDataToSend.append('hasCustomization', formData.hasCustomization.toString());
     formDataToSend.append('customizationDetails', formData.customizationDetails);
-    
+    formDataToSend.append('hasVersions', formData.hasVersions.toString());
+    formDataToSend.append('priceFan', formData.priceFan.toString());
+    formDataToSend.append('pricePlayer', formData.pricePlayer.toString());
+
     // Add image files to FormData
     formData.imageFiles.forEach(file => {
       formDataToSend.append('images', file);
     });
-    
+
     try {
       const response = await fetch(`${apiUrl}/products`, {
         method: 'POST',
@@ -200,14 +209,14 @@ export default function AddProductPage() {
 
       const responseText = await response.text();
       let data;
-      
+
       try {
         data = responseText ? JSON.parse(responseText) : {};
       } catch (e) {
         console.error('Failed to parse response as JSON:', responseText);
         throw new Error('Server returned invalid JSON response');
       }
-      
+
       if (!response.ok) {
         console.error('Server error response:', {
           status: response.status,
@@ -216,11 +225,11 @@ export default function AddProductPage() {
         });
         throw new Error(data.message || `Server error: ${response.status} ${response.statusText}`);
       }
-      
+
       // Set success message and show modal
       setSuccessMessage(`${formData.name} has been added to your store.`);
       setShowSuccessModal(true);
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -231,11 +240,14 @@ export default function AddProductPage() {
         imageFiles: [],
         hasCustomization: false,
         customizationDetails: '',
+        hasVersions: false,
+        priceFan: '',
+        pricePlayer: '',
       });
-      
+
       // Show success toast
       toast.success('Product created successfully!');
-      
+
     } catch (error: unknown) {
       console.error('Error adding product:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -301,7 +313,7 @@ export default function AddProductPage() {
                   </option>
                 ))}
               </InputField>
-              
+
               <InputField
                 label="Price (Ksh.)"
                 name="price"
@@ -313,14 +325,14 @@ export default function AddProductPage() {
                 step="0.01"
               />
 
-              
+
               <div className="flex flex-col space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                   <span className="w-4 h-4 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-400">
-                      <path d="M4 20h16"/>
-                      <path d="M4 4h16"/>
-                      <path d="M12 4v16"/>
+                      <path d="M4 20h16" />
+                      <path d="M4 4h16" />
+                      <path d="M12 4v16" />
                     </svg>
                   </span>
                   Size
@@ -373,27 +385,27 @@ export default function AddProductPage() {
                       multiple
                       disabled={formData.imageFiles.length >= 5}
                     />
-                    <label 
-                      htmlFor="imageFiles" 
+                    <label
+                      htmlFor="imageFiles"
                       className={`block cursor-pointer ${formData.imageFiles.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <Upload size={24} className="mx-auto text-gray-400 mb-2" />
                       <p className="text-sm text-gray-400">
-                        {formData.imageFiles.length > 0 
+                        {formData.imageFiles.length > 0
                           ? `Add more images (${formData.imageFiles.length}/5)`
                           : 'Drag & drop or click to upload images'}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">PNG, JPG, up to 5MB each (Max 5 images)</p>
                     </label>
                   </div>
-                  
+
                   {formData.imageFiles.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                       {formData.imageFiles.map((file, index) => (
                         <div key={index} className="relative group">
                           <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden">
-                            <img 
-                              src={URL.createObjectURL(file)} 
+                            <img
+                              src={URL.createObjectURL(file)}
                               alt={`Preview ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
@@ -406,8 +418,8 @@ export default function AddProductPage() {
                             ×
                           </button>
                           <div className="text-xs text-gray-400 mt-1 truncate">
-                            {file.name.length > 15 
-                              ? `${file.name.substring(0, 12)}...${file.name.split('.').pop()}` 
+                            {file.name.length > 15
+                              ? `${file.name.substring(0, 12)}...${file.name.split('.').pop()}`
                               : file.name}
                           </div>
                         </div>
@@ -416,7 +428,7 @@ export default function AddProductPage() {
                   )}
                 </div>
               </div>
-              
+
               <div className="flex flex-col space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-300 flex items-center gap-2 mb-2">
@@ -448,6 +460,51 @@ export default function AddProductPage() {
                     onChange={handleChange}
                     type="textarea"
                   />
+                )}
+              </div>
+
+              <div className="flex flex-col space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-300 flex items-center gap-2 mb-2">
+                    <DollarSign size={16} className="text-teal-400" />
+                    Version Pricing
+                  </label>
+                  <div className="flex items-center space-x-3 p-3 bg-[#2A2A2A] border border-gray-600 rounded-lg">
+                    <input
+                      id="hasVersions"
+                      name="hasVersions"
+                      type="checkbox"
+                      checked={formData.hasVersions}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-teal-600 bg-gray-700 border-gray-500 rounded focus:ring-teal-500"
+                    />
+                    <label htmlFor="hasVersions" className="text-white text-base">
+                      Enable separate prices for Fan and Player versions
+                    </label>
+                  </div>
+                </div>
+
+                {formData.hasVersions && (
+                  <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <InputField
+                      label="Fan Version Price"
+                      name="priceFan"
+                      icon={DollarSign}
+                      placeholder="e.g., 1500"
+                      value={formData.priceFan}
+                      onChange={handleChange}
+                      type="number"
+                    />
+                    <InputField
+                      label="Player Version Price"
+                      name="pricePlayer"
+                      icon={DollarSign}
+                      placeholder="e.g., 2500"
+                      value={formData.pricePlayer}
+                      onChange={handleChange}
+                      type="number"
+                    />
+                  </div>
                 )}
               </div>
             </div>

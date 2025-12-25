@@ -1,5 +1,6 @@
 'use client'
-import { LayoutDashboard, ShoppingBag, Tag, Users, ClipboardList, LogOut, Package, Heart } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Tag, Users, ClipboardList, LogOut, Package, Heart, Newspaper } from "lucide-react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -27,7 +28,7 @@ const Sidebar = () => {
         <Link href="/admin/products" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <ShoppingBag size={20} /> Products
         </Link>
-          <Link href="/admin/stock" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
+        <Link href="/admin/stock" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <Package size={20} /> Stock Management
         </Link>
         <Link href="/admin/category" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
@@ -42,6 +43,10 @@ const Sidebar = () => {
         <Link href="/admin/whishlist" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
           <Heart size={20} /> Wishlist
         </Link>
+        <Link href="/admin/blogs" className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#2A2A2A] transition">
+          <Newspaper size={20} /> Blogs
+        </Link>
+
       </nav>
 
       <div className="p-4 border-t border-gray-700">

@@ -18,6 +18,9 @@ interface ShopProduct {
   image: string;
   category: string;
   accentColor: string;
+  hasVersions?: boolean;
+  priceFan?: number;
+  pricePlayer?: number;
 }
 
 interface ProductImage {
@@ -129,8 +132,15 @@ const ProductCard = ({ product, isWishlisted, onToggleWishlist }: ProductCardPro
             {product.name}
           </h3>
           <p className="text-xs text-gray-400 line-clamp-1 mb-2">{product.team}</p>
+          {/* Price and Action */}
           <div className="flex items-center justify-between mt-auto">
-            <span className="text-lg font-bold text-teal-400">Ksh. {product.price.toFixed(2)}</span>
+            <span className="text-lg font-bold text-teal-400">
+              {product.hasVersions ? (
+                `Ksh. ${Math.min(product.priceFan || 0, product.pricePlayer || 0).toFixed(2)} - ${Math.max(product.priceFan || 0, product.pricePlayer || 0).toFixed(2)}`
+              ) : (
+                `Ksh. ${product.price.toFixed(2)}`
+              )}
+            </span>
             <div className="flex items-center text-xs text-gray-400 group-hover:text-teal-400 transition-colors">
               View <ArrowRight className="ml-0.5" size={12} />
             </div>
@@ -183,6 +193,9 @@ function LandingContent() {
             image: full || "/images/jersey1.jpg",
             category: p.category || "Uncategorized", // Fallback for reliable categorization
             accentColor: "border-green-600",
+            hasVersions: p.hasVersions,
+            priceFan: p.priceFan,
+            pricePlayer: p.pricePlayer,
           };
         });
 

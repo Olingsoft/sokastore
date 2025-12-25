@@ -28,6 +28,9 @@ interface Product {
   gallery?: string[];
   availableBadges?: string[];
   pricePerCustomization?: number;
+  hasVersions?: boolean;
+  priceFan?: number;
+  pricePlayer?: number;
 }
 
 interface Badge {
@@ -94,7 +97,7 @@ const OptionPill = ({ label, isSelected, onClick }: { label: string, isSelected:
 
 const ProductCard = ({ product }: { product: Product }) => (
   <div className="bg-[#1E1E1E] rounded-lg overflow-hidden shadow-xl border border-gray-800 hover:border-teal-400 transition-all duration-300">
-    <Link href={`/product/${product.id}`}>
+    <Link href={`/shop/${product.id}`}>
       <div className="relative pb-[100%] bg-gray-800">
         <img
           src={product.image || '/images/jersey1.jpg'}
@@ -176,7 +179,14 @@ export default function ProductDetailPage() {
           gallery: gallery.length ? gallery : [getFullImageUrl(primary) || '/images/jersey1.jpg'],
           availableBadges: Array.isArray(p.availableBadges) ? p.availableBadges : [],
           pricePerCustomization: Number(p.pricePerCustomization) || 0,
+          hasVersions: p.hasVersions,
+          priceFan: Number(p.priceFan) || 0,
+          pricePlayer: Number(p.pricePlayer) || 0,
         };
+
+        if (mapped.hasVersions) {
+          mapped.types = ['Fan Version', 'Player Version'];
+        }
 
         setProduct(mapped);
 
@@ -224,7 +234,14 @@ export default function ProductDetailPage() {
             gallery: gallery.length ? gallery : [getFullImageUrl(primary) || '/images/jersey1.jpg'],
             availableBadges: Array.isArray(p.availableBadges) ? p.availableBadges : [],
             pricePerCustomization: Number(p.pricePerCustomization) || 0,
+            hasVersions: p.hasVersions,
+            priceFan: Number(p.priceFan) || 0,
+            pricePlayer: Number(p.pricePlayer) || 0,
           } as Product;
+          if (mapped.hasVersions) {
+            mapped.types = ['Fan Version', 'Player Version'];
+          }
+          return mapped;
         });
 
         setRelatedProducts(mapped);
@@ -295,7 +312,18 @@ export default function ProductDetailPage() {
 
   const isCustomized = !!(customization.playerName || customization.playerNumber || customization.selectedBadge);
   const customizationFee = isCustomized ? 400 : 0;
-  const totalPrice = (product.price + customizationFee) * quantity;
+
+  // Calculate base price based on selected version
+  let basePrice = product.price;
+  if (product.hasVersions) {
+    if (selectedType === 'Fan Version') {
+      basePrice = product.priceFan || 0;
+    } else if (selectedType === 'Player Version') {
+      basePrice = product.pricePlayer || 0;
+    }
+  }
+
+  const totalPrice = (basePrice + customizationFee) * quantity;
 
   const inputClass = "w-full bg-[#2A2A2A] border border-gray-700 text-white rounded-md py-2 px-3 text-sm focus:ring-teal-400 focus:border-teal-400 focus:outline-none transition-all";
   const labelClass = "block text-xs font-medium text-gray-400 mb-1 tracking-wider uppercase";
@@ -347,7 +375,13 @@ export default function ProductDetailPage() {
           <div className="flex flex-col gap-4">
             <div>
               <h1 className="text-3xl text-white font-extrabold mb-1">{product.name}</h1>
-              <p className="text-xl font-semibold text-teal-400 mb-3">Ksh. {product.price.toFixed(2)}</p>
+              <p className="text-xl font-semibold text-teal-400 mb-3">
+                {product.hasVersions ? (
+                  selectedType === 'Fan Version' ? `Ksh. ${(product.priceFan || 0).toFixed(2)}` : `Ksh. ${(product.pricePlayer || 0).toFixed(2)}`
+                ) : (
+                  `Ksh. ${product.price.toFixed(2)}`
+                )}
+              </p>
               <p className="text-gray-300 text-sm">{product.description}</p>
             </div>
 
